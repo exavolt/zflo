@@ -1,6 +1,6 @@
 # @zflo/api-format
 
-Format API contracts and registry for zflo parsers and formatters. This package provides standardized interfaces and a plugin architecture for format implementations.
+Format API contracts and registry for ZFlo parsers and formatters. This package provides standardized interfaces and a plugin architecture for format implementations.
 
 ## Features
 

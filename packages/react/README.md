@@ -1,6 +1,6 @@
 # @zflo/react
 
-Headless React hooks for zflo (works in React and React Native).
+Headless React hooks for ZFlo (works in React and React Native).
 
 ## Install
 

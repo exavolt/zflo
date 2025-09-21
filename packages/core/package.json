@@ -1,7 +1,7 @@
 {
   "name": "@zflo/core",
   "version": "0.3.0",
-  "description": "Core package for zflo flow execution framework",
+  "description": "Core package for ZFlo flow execution framework",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -44,6 +44,6 @@
     "rule-based-system",
     "rule-engine"
   ],
-  "author": "zflo Team",
+  "author": "ZFlo Team",
   "license": "MIT"
 }

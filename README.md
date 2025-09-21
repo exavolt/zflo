@@ -18,7 +18,7 @@ This is a TypeScript monorepo using pnpm workspaces. Key packages include:
 - **`@zflo/react`**: Provides headless React hooks (`useFlowEngine`) for building custom UIs in React and React Native. It manages the engine instance and exposes its state and methods.
 - **`@zflo/react-web`**: A reference implementation of web-specific React components that use the headless hooks. Useful for rapid prototyping or as a guide for your own components.
 - **`@zflo/ui-react-tw`**: A shared library of styled UI components (based on shadcn/ui) used by the demo app.
-- **`@zflo/format-*`**: Pluggable modules for parsing different data formats (`-mermaid`, `-dot`) into the core zflo data structure.
+- **`@zflo/format-*`**: Pluggable modules for parsing different data formats (`-mermaid`, `-dot`) into the core ZFlo data structure.
 
 Integration packages:
 

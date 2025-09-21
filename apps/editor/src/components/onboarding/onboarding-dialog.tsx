@@ -29,7 +29,7 @@ export function OnboardingDialog({
 
   const steps = [
     {
-      title: 'Welcome to zflo Editor',
+      title: 'Welcome to ZFlo Editor',
       content: (
         <div className="space-y-4">
           <div className="aspect-video bg-black rounded-lg overflow-hidden">
@@ -44,7 +44,7 @@ export function OnboardingDialog({
           </div>
           <p className="text-sm text-muted-foreground">
             Watch this quick introduction to learn how to create interactive
-            flows with the zflo Editor.
+            flows with the ZFlo Editor.
           </p>
         </div>
       ),

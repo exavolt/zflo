@@ -1,7 +1,7 @@
 {
   "name": "@zflo/api-viz",
   "version": "0.1.0",
-  "description": "Base types and interfaces for zflo visualization packages",
+  "description": "Base types and interfaces for ZFlo visualization packages",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

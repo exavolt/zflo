@@ -1,7 +1,7 @@
 {
   "name": "@zflo/api-format",
   "version": "0.1.0",
-  "description": "Format API contracts and registry for zflo parsers and formatters",
+  "description": "Format API contracts and registry for ZFlo parsers and formatters",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -27,7 +27,7 @@
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   },
-  "author": "zflo Team",
+  "author": "ZFlo Team",
   "license": "MIT",
   "keywords": [
     "format",

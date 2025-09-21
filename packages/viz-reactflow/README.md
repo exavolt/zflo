@@ -1,6 +1,6 @@
 # @zflo/viz-reactflow
 
-React Flow visualization components for zflo flows.
+React Flow visualization components for ZFlo flows.
 
 ## Features
 
@@ -102,7 +102,7 @@ function CustomFlowVisualization() {
 
 | Prop                   | Type                       | Default | Description                                       |
 | ---------------------- | -------------------------- | ------- | ------------------------------------------------- |
-| `flow`                 | `ZFFlow`                   | -       | The zflo flow to visualize                        |
+| `flow`                 | `ZFFlow`                   | -       | The ZFlo flow to visualize                        |
 | `currentNodeId`        | `string`                   | -       | ID of the currently active node                   |
 | `history`              | `ExecutionStep[]`          | `[]`    | Execution history for traversal indicators        |
 | `onNodeClick`          | `(nodeId: string) => void` | -       | Callback when a node is clicked                   |

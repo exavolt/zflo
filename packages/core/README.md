@@ -1,6 +1,6 @@
 # @zflo/core
 
-Core package for zflo flow execution framework.
+Core package for ZFlo flow execution framework.
 
 - UI-agnostic engine and types
 - Deterministic state management and rule evaluation (CEL by default)
