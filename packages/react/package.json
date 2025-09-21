@@ -1,6 +1,6 @@
 {
   "name": "@zflo/react",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "React components and hooks for zflo",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
