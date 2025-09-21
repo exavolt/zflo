@@ -1,0 +1,344 @@
+{
+  "id": "4375eaf1-9a5f-420e-8cbf-b238c07d13de",
+  "title": "Find Your Perfect Coffee Brewing Temperature",
+  "description": "Find the perfect temperature for your coffee through guided tasting and adjustment using binary search algorithm.",
+  "nodes": [
+    {
+      "id": "node-1",
+      "title": "Welcome",
+      "content": "Welcome to the Coffee Brewing Temperature Finder! This interactive guide uses a binary search algorithm to help you discover your perfect brewing temperature.\n\nWe'll start with a temperature range from ${lowTemp}°C to ${highTemp}°C (a ${highTemp - lowTemp}°C range). Each iteration, you'll taste three cups and tell us which tastes best, allowing us to narrow down to your ideal temperature.\n\nThe process is systematic and efficient - let's find your perfect brew!\n\nYou will need to prepare:\n- Coffee — ready to brew for up to 6 brews\n- Brewer — three of them or you can do it sequentially\n- Cups — three of them",
+      "autoAdvance": "default",
+      "outlets": [
+        {
+          "id": "8636c72a-b2c6-44d6-afe2-ebdf020561e9",
+          "to": "node-2",
+          "label": "",
+          "condition": ""
+        }
+      ],
+      "actions": []
+    },
+    {
+      "id": "node-2",
+      "title": "Brewing",
+      "content": "**Iteration ${iteration}**: Brew three cups at different temperatures:\n\n🔥 **Hot**: ${highTemp}°C ${bestTemp == highTemp ? \"(you can skip this)\": \"\"}\n🌡️ **Medium**: ${midTemp}°C ${bestTemp == midTemp ? \"(you can skip this)\": \"\"}\n❄️ **Cool**: ${lowTemp}°C ${bestTemp == lowTemp ? \"(you can skip this)\": \"\"}\n\nCurrent range: ${highTemp - lowTemp}°C wide. Use the same coffee, grind size, ratio and brew size, and brewing method for all three cups.",
+      "autoAdvance": "default",
+      "outlets": [
+        {
+          "id": "ac53070c-3c24-4fb0-9c94-c5c7bf747e52",
+          "to": "node-3",
+          "label": "",
+          "condition": ""
+        }
+      ],
+      "actions": [
+        {
+          "type": "set",
+          "target": "iteration",
+          "expression": "iteration + 1"
+        }
+      ]
+    },
+    {
+      "id": "node-3",
+      "title": "Tasting",
+      "content": "Now for the tasting! Let all cups cool to the same drinking temperature (around 60-65°C).\n\n**Tasting Tips:**\n• Rinse your palate with water between tastings\n• Taste in the same order each time\n• Focus on overall flavor balance and preference\n\nWhich cup tastes the best to you? Pick the one that is closest to your preference even when its taste is not that great.",
+      "autoAdvance": "default",
+      "outlets": [
+        {
+          "id": "a3030db9-406c-4363-83f5-2e0cf2001435",
+          "to": "node-4",
+          "label": "Higher temperature",
+          "condition": ""
+        },
+        {
+          "id": "c1dd27a6-906b-4587-9573-6d590c750403",
+          "to": "node-9",
+          "label": "Mid temperature",
+          "condition": ""
+        },
+        {
+          "id": "33f0b7a8-6b85-488f-83bd-76e07ae67e5b",
+          "to": "node-12",
+          "label": "Lower temperature",
+          "condition": ""
+        },
+        {
+          "id": "1ead998c-6d94-4e52-85ab-3b398022c62e",
+          "to": "node-16",
+          "label": "All cups tasted good",
+          "condition": "iteration == 1"
+        },
+        {
+          "id": "f09fb042-cdcc-427c-a1a4-a9a2e66e11e9",
+          "to": "node-17",
+          "label": "All cups tasted bad",
+          "condition": "iteration == 1"
+        }
+      ],
+      "actions": []
+    },
+    {
+      "id": "node-4",
+      "title": "Upper range check",
+      "content": "This should be an auto-advance node.",
+      "autoAdvance": "always",
+      "outlets": [
+        {
+          "id": "9d5bd5c3-7e72-407b-ba92-9ae856059d93",
+          "to": "node-5",
+          "label": "Range too narrow",
+          "condition": "(highTemp - lowTemp) * 0.5 <= 3"
+        },
+        {
+          "id": "560eba93-10ec-4d10-a823-63915c7cf04d",
+          "to": "node-6",
+          "label": "Range is still wide",
+          "condition": ""
+        }
+      ],
+      "actions": [
+        {
+          "type": "set",
+          "target": "bestTemp",
+          "expression": "highTemp"
+        }
+      ]
+    },
+    {
+      "id": "node-5",
+      "title": "Narrowed it down!",
+      "content": "Perfect! After ${iteration} iteration${iteration == 1 ? \"\" : \"s\"}, we've found your ideal brewing temperature: **${bestTemp}°C** (±1°C).\n\nThis temperature should give you consistently excellent coffee. The final range was only ${highTemp - lowTemp}°C wide, ensuring precision in your brewing.",
+      "autoAdvance": "default",
+      "outlets": [],
+      "actions": []
+    },
+    {
+      "id": "node-6",
+      "title": "Narrow down it further?",
+      "content": "You preferred the **${highTemp}°C** cup.\n\nWe'll focus on the upper half of this range. Shall we continue narrowing it down?",
+      "autoAdvance": "default",
+      "outlets": [
+        {
+          "id": "32479183-af7b-4e93-9cbb-d11debd7219e",
+          "to": "node-7",
+          "label": "Yes. Let's narrow down",
+          "condition": ""
+        },
+        {
+          "id": "a228752c-aaae-4c4a-81aa-c42b4d4dc885",
+          "to": "node-8",
+          "label": "No. I am already satisfied",
+          "condition": ""
+        }
+      ],
+      "actions": []
+    },
+    {
+      "id": "node-7",
+      "title": "Upper half refinement",
+      "content": "Adjusting range to focus on upper temperatures.\n\nNew range: ${lowTemp}°C to ${highTemp}°C\nNew middle point: ${midTemp}°C",
+      "autoAdvance": "default",
+      "outlets": [
+        {
+          "id": "xy-edge__node-7-node-2",
+          "to": "node-2",
+          "label": "",
+          "condition": ""
+        }
+      ],
+      "actions": [
+        {
+          "type": "set",
+          "target": "lowTemp",
+          "expression": "midTemp"
+        },
+        {
+          "type": "set",
+          "target": "midTemp",
+          "expression": "(highTemp + lowTemp) * 0.5"
+        }
+      ]
+    },
+    {
+      "id": "node-8",
+      "title": "Satisfying cup",
+      "content": "Excellent! You've found your perfect brewing temperature: **${bestTemp}°C** (±1°C).\n\nThis temperature represents your personal preference after ${iteration} iteration${iteration == 1 ? \"\" : \"s\"} of systematic tasting. Enjoy your perfectly brewed coffee!",
+      "autoAdvance": "default",
+      "outlets": [],
+      "actions": []
+    },
+    {
+      "id": "node-9",
+      "title": "Middle range check",
+      "content": "",
+      "autoAdvance": "always",
+      "outlets": [
+        {
+          "id": "013f48dd-5f69-4ec4-8f3c-3594ae9fccd2",
+          "to": "node-5",
+          "label": "Range too narrow",
+          "condition": "(highTemp - lowTemp) * 0.5 <= 3"
+        },
+        {
+          "id": "2ad3d9ca-2b2e-4d08-a187-b817ca811a22",
+          "to": "node-10",
+          "label": "Range is still wide",
+          "condition": ""
+        }
+      ],
+      "actions": [
+        {
+          "type": "set",
+          "target": "bestTemp",
+          "expression": "midTemp"
+        }
+      ]
+    },
+    {
+      "id": "node-10",
+      "title": "Narrow down it further?",
+      "content": "You preferred the **${midTemp}°C** cup.\n\nSince you chose the middle temperature, we can narrow the range around this sweet spot. Would you like to continue refining?",
+      "autoAdvance": "default",
+      "outlets": [
+        {
+          "id": "a278b5b1-b8d2-42a9-886e-3cc3fc6e0b04",
+          "to": "node-11",
+          "label": "Yes. Let's narrow it down",
+          "condition": ""
+        },
+        {
+          "id": "7e14452f-3229-407b-b482-d3c60cbfea28",
+          "to": "node-8",
+          "label": "No. I am already satisfied",
+          "condition": ""
+        }
+      ],
+      "actions": []
+    },
+    {
+      "id": "node-11",
+      "title": "Middle range refinement",
+      "content": "Adjusting range to focus around middle temperatures.\n\nNew range: ${lowTemp}°C to ${highTemp}°C\nNew middle point: ${midTemp}°C",
+      "autoAdvance": "default",
+      "outlets": [
+        {
+          "id": "xy-edge__node-11-node-2",
+          "to": "node-2",
+          "label": "",
+          "condition": ""
+        }
+      ],
+      "actions": [
+        {
+          "type": "set",
+          "target": "highTemp",
+          "expression": "(highTemp + midTemp) * 0.5"
+        },
+        {
+          "type": "set",
+          "target": "lowTemp",
+          "expression": "(midTemp + lowTemp) * 0.5"
+        }
+      ]
+    },
+    {
+      "id": "node-12",
+      "title": "Lower range check",
+      "content": "",
+      "autoAdvance": "always",
+      "outlets": [
+        {
+          "id": "4c41d83b-9332-49f1-b4c6-204da90f6549",
+          "to": "node-5",
+          "label": "Range is too narrow",
+          "condition": "(highTemp - lowTemp) * 0.5 <= 3"
+        },
+        {
+          "id": "4ad61f79-2a6f-419f-8d60-f23130e77ed7",
+          "to": "node-14",
+          "label": "Range is still wide",
+          "condition": ""
+        }
+      ],
+      "actions": [
+        {
+          "type": "set",
+          "target": "bestTemp",
+          "expression": "lowTemp"
+        }
+      ]
+    },
+    {
+      "id": "node-14",
+      "title": "Narrow down it further?",
+      "content": "You preferred the **${lowTemp}°C** cup.\n\nWe'll focus on the lower half of this range. Shall we continue narrowing it down?",
+      "autoAdvance": "default",
+      "outlets": [
+        {
+          "id": "af0c9bb2-2d65-4317-bd5b-3505ab5273c8",
+          "to": "node-15",
+          "label": "Yes. Let's narrow it down",
+          "condition": ""
+        },
+        {
+          "id": "5f80d4d8-5afb-4e6a-a7a1-8738d05729ab",
+          "to": "node-8",
+          "label": "No. I am already satisfied",
+          "condition": ""
+        }
+      ],
+      "actions": []
+    },
+    {
+      "id": "node-15",
+      "title": "Lower half refinement",
+      "content": "Adjusting range to focus on lower temperatures.\n\nNew range: ${lowTemp}°C to ${highTemp}°C\nNew middle point: ${midTemp}°C",
+      "autoAdvance": "default",
+      "outlets": [
+        {
+          "id": "xy-edge__node-15-node-2",
+          "to": "node-2",
+          "label": "",
+          "condition": ""
+        }
+      ],
+      "actions": [
+        {
+          "type": "set",
+          "target": "highTemp",
+          "expression": "midTemp"
+        },
+        {
+          "type": "set",
+          "target": "midTemp",
+          "expression": "(highTemp + lowTemp) * 0.5"
+        }
+      ]
+    },
+    {
+      "id": "node-16",
+      "title": "All cups tasted good",
+      "content": "Great for you as you enjoy your coffee at wide range of brewing temperature.",
+      "autoAdvance": "default",
+      "outlets": [],
+      "actions": []
+    },
+    {
+      "id": "node-17",
+      "title": "All cups tasted bad",
+      "content": "Sorry to hear that. You might try different brewing method or coffee. Or, maybe coffee is not for you.",
+      "autoAdvance": "default",
+      "outlets": [],
+      "actions": []
+    }
+  ],
+  "startNodeId": "node-1",
+  "globalState": {
+    "lowTemp": 80,
+    "midTemp": 90,
+    "highTemp": 100,
+    "iteration": 0
+  },
+  "expressionLanguage": "cel"
+}

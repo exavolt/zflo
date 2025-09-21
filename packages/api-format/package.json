@@ -1,0 +1,40 @@
+{
+  "name": "@zflo/api-format",
+  "version": "0.1.0",
+  "description": "Format API contracts and registry for zflo parsers and formatters",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json && tsup src/index.ts --format cjs,esm --external @zflo/core",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit",
+    "test": "vitest --run --passWithNoTests"
+  },
+  "dependencies": {
+    "@zflo/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "author": "zflo Team",
+  "license": "MIT",
+  "keywords": [
+    "format",
+    "parser",
+    "formatter",
+    "registry",
+    "api",
+    "contract"
+  ]
+}

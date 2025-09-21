@@ -1,0 +1,47 @@
+{
+  "name": "zflo",
+  "version": "0.1.0",
+  "description": "Create immersive, interactive flowchart experiences",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "eslint": "pnpm exec eslint .",
+    "clean": "pnpm -r clean",
+    "type-check": "pnpm -r type-check",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@swc/core": "^1.7.36",
+    "@types/node": "^24.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.42.0",
+    "@typescript-eslint/parser": "^8.42.0",
+    "check-dependency-version-consistency": "^5.0.1",
+    "eslint": "^9.34.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.6",
+    "prettier": "^3.6.2",
+    "supabase": "^2.40.7",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=23.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "packageManager": "pnpm@10.15.0",
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,css,md,json,html,yaml,yml}": "prettier --write"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT"
+}

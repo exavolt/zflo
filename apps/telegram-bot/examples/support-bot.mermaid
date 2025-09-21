@@ -1,0 +1,67 @@
+flowchart TD
+    Start([🎯 Customer Support]) --> Welcome{👋 Welcome! How can we help?}
+    
+    Welcome -->|🛠️ Technical Issue| TechSupport[🔧 Technical Support]
+    Welcome -->|💳 Billing Question| Billing[💰 Billing Support]
+    Welcome -->|📦 Order Status| Orders[📋 Order Tracking]
+    Welcome -->|💬 General Inquiry| General[ℹ️ General Information]
+    
+    TechSupport --> TechMenu{What type of issue?}
+    TechMenu -->|🌐 Website Problems| WebIssue[🖥️ Website Troubleshooting]
+    TechMenu -->|📱 App Issues| AppIssue[📲 App Support]
+    TechMenu -->|🔐 Login Problems| LoginIssue[🔑 Account Access]
+    
+    WebIssue --> WebSolution[💡 Try clearing browser cache and cookies. Still having issues?]
+    AppIssue --> AppSolution[🔄 Try updating the app or reinstalling. Need more help?]
+    LoginIssue --> LoginSolution[🔓 Use 'Forgot Password' or contact us with your email]
+    
+    WebSolution -->|✅ Fixed| ThankYou[🎉 Great! Glad we could help!]
+    WebSolution -->|❌ Still broken| Escalate[📞 Let me connect you with a specialist]
+    AppSolution -->|✅ Fixed| ThankYou
+    AppSolution -->|❌ Still broken| Escalate
+    LoginSolution --> ThankYou
+    
+    Billing --> BillingMenu{💳 Billing Question Type}
+    BillingMenu -->|💰 Payment Issues| Payment[💳 Payment Support]
+    BillingMenu -->|🧾 Invoice Questions| Invoice[📄 Invoice Help]
+    BillingMenu -->|❌ Cancel Subscription| Cancel[⚠️ Cancellation Process]
+    
+    Payment --> PaymentHelp[💡 Check your payment method and try again. Contact bank if needed.]
+    Invoice --> InvoiceHelp[📧 Invoices are sent to your registered email. Check spam folder.]
+    Cancel --> CancelHelp[😔 Sorry to see you go! Would you like to speak with retention?]
+    
+    PaymentHelp --> ThankYou
+    InvoiceHelp --> ThankYou
+    CancelHelp -->|💬 Yes, retention| Retention[🤝 Connecting to retention specialist...]
+    CancelHelp -->|❌ No, cancel| CancelConfirm[✅ Cancellation processed. Thank you for using our service.]
+    
+    Orders --> OrderMenu{📦 Order Question Type}
+    OrderMenu -->|📍 Track Package| Track[🚚 Enter your tracking number for real-time updates]
+    OrderMenu -->|🔄 Return/Exchange| Returns[↩️ Return & Exchange Policy]
+    OrderMenu -->|⏰ Delivery Issues| Delivery[🚛 Delivery Support]
+    
+    Track --> TrackHelp[📱 Use tracking number: ABC123. Expected delivery: Tomorrow]
+    Returns --> ReturnHelp[📋 Returns accepted within 30 days. Need return label?]
+    Delivery --> DeliveryHelp[⏰ Standard delivery: 3-5 days. Express: 1-2 days]
+    
+    TrackHelp --> ThankYou
+    ReturnHelp -->|📧 Yes, send label| ReturnLabel[📧 Return label sent to your email]
+    ReturnHelp -->|ℹ️ Just info| ThankYou
+    DeliveryHelp --> ThankYou
+    
+    General --> GeneralMenu{ℹ️ What would you like to know?}
+    GeneralMenu -->|🏢 About Company| About[🌟 We're a leading tech company serving customers worldwide]
+    GeneralMenu -->|📞 Contact Info| Contact[📧 Email: support@company.com<br/>📞 Phone: 1-800-SUPPORT]
+    GeneralMenu -->|⏰ Business Hours| Hours[🕒 Mon-Fri: 9AM-6PM EST<br/>📧 Email support: 24/7]
+    
+    About --> ThankYou
+    Contact --> ThankYou
+    Hours --> ThankYou
+    
+    ReturnLabel --> ThankYou
+    Retention --> ThankYou
+    CancelConfirm --> End([👋 Goodbye!])
+    Escalate --> End
+    ThankYou --> Restart{Need more help?}
+    Restart -->|🔄 Yes| Welcome
+    Restart -->|✅ No| End

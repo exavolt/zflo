@@ -1,0 +1,36 @@
+{
+  "name": "@zflo/api-viz",
+  "version": "0.1.0",
+  "description": "Base types and interfaces for zflo visualization packages",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json && tsup src/index.ts --format cjs,esm --external @zflo/core,react",
+    "dev": "tsc --watch --project tsconfig.build.json",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@zflo/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.1",
+    "react": "^19.1.1",
+    "tsup": "^8.5.0",
+    "typescript": "^5.7.3"
+  },
+  "peerDependencies": {
+    "react": "^19.1.1"
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "name": "@zflo/ui-react-tw",
+  "version": "0.1.0",
+  "description": "Styled UI components for ZFlo based on Shadcn UI",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json && tsup src/index.ts --format cjs,esm --external react,react-dom,@zflo/core,@zflo/react",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --external react,react-dom,@zflo/core,@zflo/react --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwindcss-animate": "*"
+  },
+  "peerDependenciesMeta": {
+    "tailwindcss-animate": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
+    "@radix-ui/react-popover": "^1.1.15",
+    "@radix-ui/react-separator": "^1.1.7",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-tabs": "^1.1.13",
+    "@zflo/core": "workspace:*",
+    "@zflo/react": "workspace:*",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.541.0",
+    "tailwind-merge": "^3.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.9",
+    "@types/react-dom": "^19.1.9",
+    "tsup": "^8.3.5",
+    "typescript": "^5.9.2"
+  },
+  "keywords": [
+    "zflo",
+    "flowchart",
+    "ui",
+    "react",
+    "shadcn",
+    "tailwind"
+  ],
+  "author": "zflo Team",
+  "license": "MIT"
+}

@@ -1,0 +1,44 @@
+{
+  "name": "@zflo/platform-core",
+  "version": "0.1.0",
+  "description": "Shared integrations for ZFlo apps (Supabase, analytics, etc.)",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json && tsup src/index.ts --format cjs,esm --external @supabase/supabase-js",
+    "clean": "rm -rf dist",
+    "dev": "tsup --watch",
+    "type-check": "tsc --noEmit",
+    "test": "vitest --run --passWithNoTests",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.56.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "@types/react": "^19.1.12",
+    "tsup": "^8.3.5",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  }
+}

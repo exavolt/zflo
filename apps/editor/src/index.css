@@ -1,0 +1,4 @@
+/* ReactFlow styles */
+@import '@xyflow/react/dist/base.css';
+
+@import './base.css';

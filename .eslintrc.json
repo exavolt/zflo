@@ -1,0 +1,102 @@
+{
+  "root": true,
+  "env": {
+    "browser": true,
+    "es2020": true,
+    "node": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "@typescript-eslint/recommended",
+    "@typescript-eslint/recommended-requiring-type-checking"
+  ],
+  "ignorePatterns": ["dist", ".eslintrc.cjs"],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module",
+    "project": ["./tsconfig.json", "./packages/*/tsconfig.json"]
+  },
+  "plugins": ["@typescript-eslint"],
+  "rules": {
+    "@typescript-eslint/no-unused-vars": "error",
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-empty-function": "off",
+    "@typescript-eslint/no-non-null-assertion": "warn"
+  },
+  "overrides": [
+    {
+      "files": ["packages/core/src/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": ["error", { "paths": ["react", "react-dom"] }],
+        "no-restricted-syntax": [
+          "error",
+          {
+            "selector": "Identifier[name='window']",
+            "message": "DOM global 'window' is not allowed in @zflo/core."
+          },
+          {
+            "selector": "Identifier[name='document']",
+            "message": "DOM global 'document' is not allowed in @zflo/core."
+          }
+        ],
+        "@typescript-eslint/ban-types": [
+          "error",
+          {
+            "types": {
+              "Window": "DOM type 'Window' is not allowed in @zflo/core.",
+              "Document": "DOM type 'Document' is not allowed in @zflo/core.",
+              "HTMLElement": "DOM type 'HTMLElement' is not allowed in @zflo/core.",
+              "Node": "DOM type 'Node' is not allowed in @zflo/core.",
+              "KeyboardEvent": "DOM type 'KeyboardEvent' is not allowed in @zflo/core."
+            },
+            "extendDefaults": true
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/react/src/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": ["react-dom"],
+            "patterns": [
+              "@radix-ui/*",
+              "lucide-react",
+              "tailwindcss*",
+              "tw-animate-css"
+            ]
+          }
+        ],
+        "no-restricted-syntax": [
+          "error",
+          {
+            "selector": "Identifier[name='window']",
+            "message": "Use headless patterns; DOM global 'window' is restricted in @zflo/react. Put web-only logic in @zflo/react-web."
+          },
+          {
+            "selector": "Identifier[name='document']",
+            "message": "Use headless patterns; DOM global 'document' is restricted in @zflo/react. Put web-only logic in @zflo/react-web."
+          }
+        ],
+        "@typescript-eslint/ban-types": [
+          "error",
+          {
+            "types": {
+              "Window": "Use headless patterns; DOM types are restricted in @zflo/react.",
+              "Document": "Use headless patterns; DOM types are restricted in @zflo/react.",
+              "HTMLElement": "Use headless patterns; DOM types are restricted in @zflo/react.",
+              "Node": "Use headless patterns; DOM types are restricted in @zflo/react.",
+              "KeyboardEvent": "Use headless patterns; DOM types are restricted in @zflo/react."
+            },
+            "extendDefaults": true
+          }
+        ]
+      }
+    }
+  ]
+}

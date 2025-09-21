@@ -1,0 +1,44 @@
+{
+  "name": "@zflo/react-web",
+  "version": "0.1.0",
+  "description": "Web-specific React components for ZFlo (DOM-based UI)",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json && tsup src/index.ts --format cjs,esm --external react,react-dom,@zflo/core,@zflo/react",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --external react,react-dom,@zflo/core,@zflo/react --watch",
+    "test": "vitest --run --passWithNoTests",
+    "test:watch": "vitest --watch",
+    "clean": "rm -rf dist",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@zflo/core": "workspace:*",
+    "@zflo/react": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.12",
+    "react": "^19.0.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "keywords": [
+    "react",
+    "web",
+    "dom",
+    "flowchart",
+    "interactive",
+    "expert-system"
+  ],
+  "author": "zflo Team",
+  "license": "MIT"
+}

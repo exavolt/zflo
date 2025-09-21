@@ -1,0 +1,185 @@
+{
+  "id": "simple-adventure",
+  "title": "Simple Adventure",
+  "description": "A simple text adventure to test the CLI player",
+  "expressionLanguage": "cel",
+  "startNodeId": "start",
+  "globalState": {
+    "playerName": "Hero",
+    "health": 100,
+    "hasKey": false
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "title": "The Beginning",
+      "content": "Welcome to the Simple Adventure, {{playerName}}!\n\nYou find yourself standing at the entrance of a mysterious cave. The air is cool and you can hear water dripping somewhere in the darkness ahead.\n\nWhat do you want to do?",
+      "outlets": [
+        {
+          "id": "enter-cave",
+          "label": "Enter the cave",
+          "to": "cave-entrance"
+        },
+        {
+          "id": "look-around",
+          "label": "Look around outside",
+          "to": "outside-area"
+        }
+      ]
+    },
+    {
+      "id": "outside-area",
+      "title": "Outside the Cave",
+      "content": "You look around the area outside the cave. You notice some old ruins covered in moss and a small glint of metal among the rocks.\n\nUpon closer inspection, you find an old rusty key!",
+      "actions": [
+        {
+          "type": "set",
+          "key": "hasKey",
+          "value": true
+        }
+      ],
+      "outlets": [
+        {
+          "id": "take-key-enter",
+          "label": "Take the key and enter the cave",
+          "to": "cave-entrance"
+        },
+        {
+          "id": "leave-key",
+          "label": "Leave the key and walk away",
+          "to": "ending-coward"
+        }
+      ]
+    },
+    {
+      "id": "cave-entrance",
+      "title": "Inside the Cave",
+      "content": "You step into the cave. The temperature drops noticeably and your footsteps echo in the darkness. As your eyes adjust, you see two passages ahead.\n\nTo your left, you hear the sound of running water. To your right, you see a faint glow.",
+      "outlets": [
+        {
+          "id": "go-left",
+          "label": "Go left toward the water",
+          "to": "underground-river"
+        },
+        {
+          "id": "go-right",
+          "label": "Go right toward the glow",
+          "to": "treasure-room"
+        }
+      ]
+    },
+    {
+      "id": "underground-river",
+      "title": "Underground River",
+      "content": "You follow the sound and discover a beautiful underground river with crystal-clear water. The gentle flow is mesmerizing, and you feel refreshed just being here.",
+      "actions": [
+        {
+          "type": "set",
+          "key": "health",
+          "expression": "state.health + 20"
+        }
+      ],
+      "outlets": [
+        {
+          "id": "drink-water",
+          "label": "Drink from the river and rest",
+          "to": "ending-peaceful"
+        },
+        {
+          "id": "continue-exploring",
+          "label": "Continue exploring",
+          "to": "treasure-room"
+        }
+      ]
+    },
+    {
+      "id": "treasure-room",
+      "title": "The Treasure Chamber",
+      "content": "You enter a chamber filled with a soft, golden glow. In the center stands an ornate chest, but it's locked with an intricate mechanism.\n\n{{#if hasKey}}You remember the key you found earlier!{{else}}You need a key to open this chest.{{/if}}",
+      "outlets": [
+        {
+          "id": "use-key",
+          "label": "Use the key to open the chest",
+          "to": "ending-treasure",
+          "condition": "state.hasKey == true"
+        },
+        {
+          "id": "try-force",
+          "label": "Try to force the chest open",
+          "to": "ending-trapped",
+          "condition": "state.hasKey == false"
+        },
+        {
+          "id": "leave-chest",
+          "label": "Leave the chest alone",
+          "to": "ending-wise"
+        }
+      ]
+    },
+    {
+      "id": "ending-treasure",
+      "title": "Treasure Found!",
+      "content": "The key fits perfectly! The chest opens with a satisfying click, revealing a pile of ancient gold coins and a beautiful gemstone that seems to glow with its own inner light.\n\nCongratulations, {{playerName}}! You've found the treasure and completed your adventure successfully!",
+      "actions": [
+        {
+          "type": "set",
+          "key": "ending",
+          "value": "treasure"
+        }
+      ]
+    },
+    {
+      "id": "ending-trapped",
+      "title": "Trapped!",
+      "content": "As you try to force the chest open, you trigger an ancient trap! Darts shoot from the walls, and you barely escape with your life.\n\nYou flee the cave, wounded but wiser. Sometimes patience and preparation are more valuable than brute force.",
+      "actions": [
+        {
+          "type": "set",
+          "key": "health",
+          "expression": "state.health - 30"
+        },
+        {
+          "type": "set",
+          "key": "ending",
+          "value": "trapped"
+        }
+      ]
+    },
+    {
+      "id": "ending-peaceful",
+      "title": "Inner Peace",
+      "content": "You spend time by the underground river, drinking the pure water and reflecting on your journey. Sometimes the real treasure isn't gold or gems, but the peace and clarity we find along the way.\n\nYou leave the cave feeling refreshed and enlightened.",
+      "actions": [
+        {
+          "type": "set",
+          "key": "ending",
+          "value": "peaceful"
+        }
+      ]
+    },
+    {
+      "id": "ending-wise",
+      "title": "Wisdom Prevails",
+      "content": "You decide not to disturb the chest. Some treasures are meant to remain hidden, and sometimes the wisest choice is to leave things as they are.\n\nYou exit the cave with a sense of respect for the mysteries you've encountered.",
+      "actions": [
+        {
+          "type": "set",
+          "key": "ending",
+          "value": "wise"
+        }
+      ]
+    },
+    {
+      "id": "ending-coward",
+      "title": "The Safe Path",
+      "content": "You decide the cave looks too dangerous and walk away. Sometimes discretion is the better part of valor, though you can't help but wonder what adventures you might have missed.\n\nYou return home safely, but with a lingering sense of 'what if?'",
+      "actions": [
+        {
+          "type": "set",
+          "key": "ending",
+          "value": "safe"
+        }
+      ]
+    }
+  ]
+}

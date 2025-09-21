@@ -1,0 +1,55 @@
+{
+  "name": "@zflo/viz-reactflow",
+  "version": "0.1.0",
+  "description": "React Flow visualization components for zflo",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json && tsup src/index.ts --format cjs,esm --external react,react-dom,@xyflow/react,@zflo/core,@zflo/react,dagre",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --external react,react-dom,@xyflow/react,@zflo/core,@zflo/react,dagre --watch",
+    "test": "vitest --run --passWithNoTests",
+    "test:watch": "vitest --watch",
+    "clean": "rm -rf dist",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@zflo/core": "workspace:*",
+    "@zflo/react": "workspace:*",
+    "@zflo/api-viz": "workspace:*",
+    "@xyflow/react": "^12.3.2",
+    "dagre": "^0.8.5"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/dagre": "^0.7.53",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "keywords": [
+    "react",
+    "react-flow",
+    "flowchart",
+    "visualization",
+    "interactive",
+    "expert-system"
+  ],
+  "author": "zflo Team",
+  "license": "MIT"
+}

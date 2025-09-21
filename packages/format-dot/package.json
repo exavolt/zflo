@@ -1,0 +1,45 @@
+{
+  "name": "@zflo/format-dot",
+  "version": "0.1.0",
+  "description": "Graphviz DOT format support for ZFlo (digraph loader)",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json && tsup src/index.ts --format cjs,esm --external @zflo/core,@zflo/api-format,ts-graphviz,@ts-graphviz/ast",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --external @zflo/core,@zflo/api-format,ts-graphviz,@ts-graphviz/ast --watch",
+    "test": "vitest --run --passWithNoTests",
+    "test:watch": "vitest --watch",
+    "clean": "rm -rf dist",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@zflo/core": "workspace:*",
+    "@zflo/api-format": "workspace:*",
+    "ts-graphviz": "^3.0.0",
+    "@ts-graphviz/ast": "^3.0.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "author": "zflo Team",
+  "license": "MIT",
+  "keywords": [
+    "graphviz",
+    "dot",
+    "parser",
+    "zflo"
+  ]
+}

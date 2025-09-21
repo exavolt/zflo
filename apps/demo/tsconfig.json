@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@zflo/core": ["../../packages/core/src"],
+      "@zflo/format-dot": ["../../packages/format-dot/src"],
+      "@zflo/format-mermaid": ["../../packages/format-mermaid/src"],
+      "@zflo/format-plantuml": ["../../packages/format-plantuml/src"],
+      "@zflo/format-zflojson": ["../../packages/format-zflojson/src"],
+      "@zflo/react": ["../../packages/react/src"],
+      "@zflo/react-web": ["../../packages/react-web/src"],
+      "@zflo/viz-mermaid": ["../../packages/viz-mermaid/src"]
+    }
+  },
+  "include": ["src"],
+  "references": []
+}

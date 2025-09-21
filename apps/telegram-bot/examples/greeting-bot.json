@@ -1,0 +1,187 @@
+{
+  "id": "greeting-bot",
+  "title": "Simple Greeting Bot",
+  "startNodeId": "welcome",
+  "nodes": [
+    {
+      "id": "welcome",
+      "type": "message",
+      "title": "Welcome Message",
+      "content": "👋 Hello! I'm your ZFlo-powered Telegram bot. How can I help you today?",
+      "outlets": [
+        { "id": "to-help", "to": "help", "label": "🆘 Get Help" },
+        { "id": "to-about", "to": "about", "label": "ℹ️ About Bot" },
+        { "id": "to-features", "to": "features", "label": "✨ Features" },
+        { "id": "to-done", "to": "done", "label": "Done" }
+      ]
+    },
+    {
+      "id": "done",
+      "type": "message",
+      "title": "Thank you!",
+      "content": "Thank you for using this bot!"
+    },
+    {
+      "id": "help",
+      "type": "message",
+      "title": "Help Information",
+      "content": "🆘 **Help Menu**\n\nI can help you with:\n• Navigation through this flow\n• Information about my capabilities\n• Answering basic questions\n\nUse the buttons below to interact with me!",
+      "outlets": [
+        {
+          "id": "help-to-welcome",
+          "to": "welcome",
+          "label": "🏠 Back to Start"
+        },
+        {
+          "id": "help-to-contact",
+          "to": "contact",
+          "label": "📞 Contact Support"
+        }
+      ]
+    },
+    {
+      "id": "about",
+      "type": "message",
+      "title": "About This Bot",
+      "content": "ℹ️ **About Me**\n\nI'm powered by ZFlo flows and running on Telegram! I was created to demonstrate how easy it is to build interactive bots using flowchart definitions.\n\n🔧 **Technology Stack:**\n• ZFlo Flow Engine\n• Telegram Bot API\n• Node.js Runtime",
+      "outlets": [
+        {
+          "id": "about-to-welcome",
+          "to": "welcome",
+          "label": "🏠 Back to Start"
+        },
+        {
+          "id": "about-to-features",
+          "to": "features",
+          "label": "✨ See Features"
+        }
+      ]
+    },
+    {
+      "id": "features",
+      "type": "message",
+      "title": "Bot Features",
+      "content": "✨ **My Features**\n\n🤖 **Interactive Conversations**\nNavigate through structured flows with buttons\n\n📊 **Multi-Format Support**\nBuilt from JSON, Mermaid, DOT, or PlantUML files\n\n🔄 **Real-time Updates**\nFlow can be updated without restarting\n\n🌐 **Flexible Deployment**\nSupports both polling and webhook modes",
+      "outlets": [
+        {
+          "id": "features-to-welcome",
+          "to": "welcome",
+          "label": "🏠 Back to Start"
+        },
+        { "id": "features-to-demo", "to": "demo", "label": "🎮 Try Demo" }
+      ]
+    },
+    {
+      "id": "demo",
+      "type": "message",
+      "title": "Interactive Demo",
+      "content": "🎮 **Interactive Demo**\n\nLet's try some interactive features! Choose an option below:",
+      "outlets": [
+        { "id": "demo-to-quiz", "to": "quiz", "label": "🧠 Quick Quiz" },
+        {
+          "id": "demo-to-feedback",
+          "to": "feedback",
+          "label": "💬 Leave Feedback"
+        },
+        {
+          "id": "demo-to-welcome",
+          "to": "welcome",
+          "label": "🏠 Back to Start"
+        }
+      ]
+    },
+    {
+      "id": "quiz",
+      "type": "message",
+      "title": "Quick Quiz",
+      "content": "🧠 **Quick Quiz**\n\nWhat powers this Telegram bot?",
+      "outlets": [
+        { "id": "quiz-correct", "to": "quiz_correct", "label": "ZFlo Flows" },
+        { "id": "quiz-wrong1", "to": "quiz_wrong", "label": "Magic" },
+        { "id": "quiz-wrong2", "to": "quiz_wrong", "label": "Pure JavaScript" }
+      ]
+    },
+    {
+      "id": "quiz_correct",
+      "type": "message",
+      "title": "Correct Answer!",
+      "content": "🎉 **Correct!**\n\nYes, this bot is powered by ZFlo flows! You can define complex conversational flows using simple flowchart syntax.",
+      "outlets": [
+        {
+          "id": "quiz-correct-to-welcome",
+          "to": "welcome",
+          "label": "🏠 Back to Start"
+        },
+        {
+          "id": "quiz-correct-to-feedback",
+          "to": "feedback",
+          "label": "💬 Leave Feedback"
+        }
+      ]
+    },
+    {
+      "id": "quiz_wrong",
+      "type": "message",
+      "title": "Try Again!",
+      "content": "🤔 **Not quite right!**\n\nThis bot is actually powered by ZFlo flows - a system that lets you create interactive bots from flowchart definitions!",
+      "outlets": [
+        { "id": "quiz-wrong-to-quiz", "to": "quiz", "label": "🔄 Try Again" },
+        {
+          "id": "quiz-wrong-to-welcome",
+          "to": "welcome",
+          "label": "🏠 Back to Start"
+        }
+      ]
+    },
+    {
+      "id": "feedback",
+      "type": "message",
+      "title": "Feedback Form",
+      "content": "💬 **Leave Feedback**\n\nHow was your experience with this bot?\n\n(In a real implementation, this could collect user input and store it)",
+      "outlets": [
+        {
+          "id": "feedback-great",
+          "to": "feedback_thanks",
+          "label": "👍 Great!"
+        },
+        { "id": "feedback-good", "to": "feedback_thanks", "label": "👌 Good" },
+        {
+          "id": "feedback-better",
+          "to": "feedback_thanks",
+          "label": "👎 Could be better"
+        }
+      ]
+    },
+    {
+      "id": "feedback_thanks",
+      "type": "message",
+      "title": "Thank You!",
+      "content": "🙏 **Thank you for your feedback!**\n\nYour input helps us improve the bot experience. Feel free to explore more features or start over.",
+      "outlets": [
+        {
+          "id": "feedback-thanks-to-welcome",
+          "to": "welcome",
+          "label": "🏠 Back to Start"
+        },
+        {
+          "id": "feedback-thanks-to-contact",
+          "to": "contact",
+          "label": "📞 Contact Us"
+        }
+      ]
+    },
+    {
+      "id": "contact",
+      "type": "message",
+      "title": "Contact Information",
+      "content": "📞 **Contact Support**\n\nNeed more help? Here's how to reach us:\n\n📧 Email: support@example.com\n🌐 Website: https://example.com\n📱 Telegram: @support_bot\n\n*This is a demo bot - contact info is fictional*",
+      "outlets": [
+        {
+          "id": "contact-to-welcome",
+          "to": "welcome",
+          "label": "🏠 Back to Start"
+        }
+      ]
+    }
+  ]
+}

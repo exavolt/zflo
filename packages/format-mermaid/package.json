@@ -1,0 +1,43 @@
+{
+  "name": "@zflo/format-mermaid",
+  "version": "0.1.0",
+  "description": "Mermaid format support for ZFlo (parser and exporter)",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json && tsup src/index.ts --format cjs,esm --external @zflo/core,@zflo/api-format",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --external @zflo/core,@zflo/api-format --watch",
+    "test": "vitest --run --passWithNoTests",
+    "test:watch": "vitest --watch",
+    "clean": "rm -rf dist",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@zflo/core": "workspace:*",
+    "@zflo/api-format": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "keywords": [
+    "mermaid",
+    "parser",
+    "flowchart",
+    "zflo"
+  ],
+  "author": "zflo Team",
+  "license": "MIT"
+}
