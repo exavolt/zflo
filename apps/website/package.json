@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "pnpm -C ../../packages/core build && pnpm -C ../../packages/format-mermaid build && pnpm -C ../../packages/react build && pnpm -C ../../packages/ui-react-tw build && tsc --noEmit && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "type-check": "tsc --noEmit"
