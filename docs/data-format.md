@@ -11,21 +11,24 @@ interface ZFFlow {
   id: string;
   title: string;
   description?: string;
+  expressionLanguage?: 'cel';
+  globalState?: Record<string, unknown>;
+  stateSchema?: JSONSchema7; // optional JSON Schema validation
+  stateRules?: StateRule[]; // optional rule engine
+  autoAdvance?: 'always' | 'default' | 'never';
+  metadata?: Record<string, unknown>;
   nodes: ZFNode[];
   startNodeId: string;
-  // Optional: default expression language for this flow (default: 'cel')
-  expressionLanguage?: 'cel';
-  metadata?: Record<string, any>;
 }
 
 interface ZFNode {
   id: string;
-  type: 'start' | 'action' | 'decision' | 'condition' | 'end';
   title: string;
-  content?: string;
-  actions?: StateAction[];
-  conditions?: StateCondition[];
-  metadata?: Record<string, any>;
+  content?: string; // supports ${...} interpolation
+  actions?: StateAction[]; // executed on node enter
+  outlets?: XFOutlet[]; // edges
+  autoAdvance?: 'always' | 'default' | 'never';
+  metadata?: Record<string, unknown>;
 }
 
 interface StateAction {

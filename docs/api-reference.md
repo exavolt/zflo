@@ -14,12 +14,15 @@ class FlowEngine {
   start(): Promise<ExecutionResult>;
   next(choice?: string): Promise<ExecutionResult>;
   reset(): void;
+  goBack(): Promise<ExecutionResult | null>;
 
   // State access
   getCurrentNode(): ZFNode | null;
   getHistory(): ExecutionStep[];
   getAvailableChoices(): Choice[];
+  getState(): Record<string, any>;
   isComplete(): boolean;
+  canGoBack(): boolean;
 
   // Event handling
   on(event: EngineEvent, handler: EventHandler): void;
@@ -31,8 +34,9 @@ class FlowEngine {
 
 ```typescript
 interface ExecutionResult {
-  node: ZFNode;
+  node: AnnotatedNode;
   choices: Choice[];
+  state: Record<string, any>;
   isComplete: boolean;
   canGoBack: boolean;
 }
@@ -49,7 +53,13 @@ interface ExecutionStep {
   timestamp: Date;
 }
 
-type EngineEvent = 'nodeEnter' | 'nodeExit' | 'complete' | 'error';
+type EngineEvent =
+  | 'nodeEnter'
+  | 'nodeExit'
+  | 'stateChange'
+  | 'autoAdvance'
+  | 'complete'
+  | 'error';
 ```
 
 ## Expression Language

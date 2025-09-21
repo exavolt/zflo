@@ -120,11 +120,16 @@ The engine uses an event-driven architecture:
 
 ```typescript
 type EngineEvents = {
-  'node:enter': { node: ZFNode; context: ExecutionContext };
-  'node:exit': { node: ZFNode; choice?: string };
-  'flow:complete': { history: ExecutionStep[] };
-  'flow:error': { error: Error; context: ExecutionContext };
-  'choice:made': { choice: string; from: string; to: string };
+  nodeEnter: { node: AnnotatedNode; state: Record<string, any> };
+  nodeExit: {
+    node: AnnotatedNode;
+    choice?: string;
+    state: Record<string, any>;
+  };
+  stateChange: { oldState: Record<string, any>; newState: Record<string, any> };
+  autoAdvance: { from: string; to: string; condition?: string };
+  complete: { history: ExecutionStep[]; finalState: Record<string, any> };
+  error: { error: Error; context?: any };
 };
 ```
 
