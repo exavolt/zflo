@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "pnpm -C ../../packages/core build && pnpm -C ../../packages/api-format build && pnpm -C ../../packages/format-zflojson build && pnpm -C ../../packages/format-mermaid build && pnpm -C ../../packages/format-dot build && pnpm -C ../../packages/format-plantuml build && pnpm -C ../../packages/react build && pnpm -C ../../packages/viz-reactflow build && pnpm -C ../../packages/viz-mermaid build && pnpm -C ../../packages/ui-react-tw build && pnpm -C ../../packages/platform-core build && tsc --noEmit && vite build",
+    "build": "pnpm -C ../../packages/core build && pnpm -C ../../packages/api-format build && pnpm -C ../../packages/api-viz build && pnpm -C ../../packages/format-zflojson build && pnpm -C ../../packages/format-mermaid build && pnpm -C ../../packages/format-dot build && pnpm -C ../../packages/format-plantuml build && pnpm -C ../../packages/react build && pnpm -C ../../packages/viz-reactflow build && pnpm -C ../../packages/viz-mermaid build && pnpm -C ../../packages/ui-react-tw build && pnpm -C ../../packages/platform-core build && tsc --noEmit && vite build",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
     "test": "vitest --run"
