@@ -399,7 +399,7 @@ importers:
         specifier: ^1.1.13
         version: 1.1.13(@types/react-dom@19.1.9(@types/react@19.1.12))(@types/react@19.1.12)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@zflo/format-mermaid':
-        specifier: link:../../packages/format-mermaid
+        specifier: workspace:*
         version: link:../../packages/format-mermaid
       '@zflo/ui-react-tw':
         specifier: workspace:*
