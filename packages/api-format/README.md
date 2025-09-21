@@ -181,7 +181,7 @@ The package provides specific error types:
 
 ## Migration from Direct Imports
 
-### Before (apps/demo)
+### Before (apps/play)
 
 ```typescript
 import { MermaidParser } from '@zflo/format-mermaid';

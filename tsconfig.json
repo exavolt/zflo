@@ -51,7 +51,7 @@
     { "path": "./packages/ui-react-tw" },
     { "path": "./packages/viz-reactflow" },
     { "path": "./packages/viz-mermaid" },
-    { "path": "./apps/demo" },
+    { "path": "./apps/play" },
     { "path": "./apps/editor" },
     { "path": "./apps/play-cli" },
     { "path": "./apps/telegram-bot" },

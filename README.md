@@ -26,7 +26,7 @@ Integration packages:
 
 Applications:
 
-- **`@zflo/demo`**: A demo and showcase of ZFlo features.
+- **`@zflo/play`**: A demo and showcase of ZFlo features.
 - **`@zflo/editor`**: A node-based flow editor for ZFlo.
 - **`@zflo/telegram-bot`**: A Telegram bot that accepts ZFlo flows as its interaction logic.
 
