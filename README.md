@@ -1,6 +1,6 @@
 # ZFlo - Flow Execution Engine
 
-A UI-agnostic flow execution engine for building stateful, rule-driven applications. Written in TypeScript, ZFlo provides a flexible framework for powering interactive experiences on any platform.
+A collection of packages for building stateful, rule-driven, applications through flow definitions. Written in TypeScript, ZFlo provides a flexible framework for powering interactive experiences on any platform.
 
 ## Key Technical Features
 
@@ -26,8 +26,8 @@ Integration packages:
 
 Applications:
 
-- **`@zflo/play`**: A demo and showcase of ZFlo features.
-- **`@zflo/editor`**: A node-based flow editor for ZFlo.
+- **`@zflo/play`**: A demo and showcase of ZFlo features. [LIVE](https://zflo-play.vercel.app/)
+- **`@zflo/editor`**: A node-based flow editor for ZFlo. [LIVE](https://zflo-editor.vercel.app/)
 - **`@zflo/telegram-bot`**: A Telegram bot that accepts ZFlo flows as its interaction logic.
 
 ## Getting Started
