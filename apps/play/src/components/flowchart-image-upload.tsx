@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import { Upload, Image, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { Upload, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from './ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent } from './ui/card';
 import { ImageToDotService } from '../services/image-to-dot-service';
 import { toast } from 'sonner';
 
