@@ -18,7 +18,7 @@ const appInfo: AppInfo = {
     'A flow execution engine for building stateful, rule-driven applications, deterministic chat bots, step-by-step troubleshooting guides, interactive fictions, and more.',
   urls: {
     main: 'https://zflo.vercel.app',
-    github: 'https://github.com/xsys-dev/zflo',
+    github: 'https://github.com/exavolt/zflo',
     docs: 'https://zflo.vercel.app/docs',
     demo: 'https://zflo-play.vercel.app',
     editor: 'https://zflo-editor.vercel.app',

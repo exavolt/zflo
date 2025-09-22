@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router';
 import { ZFFlow } from '@zflo/core';
-import { Moon, Sun, FileText, Sparkles, Globe } from 'lucide-react';
+import { Moon, Sun, FileText, Sparkles, Globe, Github } from 'lucide-react';
 import { FlowchartPlayer } from './components/flowchart-player';
 import { SharedFlows } from './components/shared-flows';
 import { IntegratedFlowPlayer } from './components/integrated-flow-player';
 import { FlowPlayerPage } from './pages/flow-player-page';
 import { useTheme } from './lib/use-theme';
+import { useAppInfo } from './contexts/app-info';
 import './lib/supabase'; // Initialize Supabase
 import { Button } from './components/ui/button';
 import {
@@ -30,6 +31,7 @@ const navLinks = [
 ];
 
 function App() {
+  const appInfo = useAppInfo();
   const [customMermaid, setCustomMermaid] = useState('');
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
@@ -56,11 +58,22 @@ function App() {
         <header className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-2">
             <Sparkles className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">ZFlo Demo</h1>
+            <h1 className="text-3xl font-bold">ZFlo Play</h1>
           </div>
-          <Button variant="outline" size="icon" onClick={toggleTheme}>
-            {theme === 'light' ? <Moon /> : <Sun />}
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="icon" asChild>
+              <a
+                href={appInfo.urls.github}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Github className="h-4 w-4" />
+              </a>
+            </Button>
+            <Button variant="outline" size="icon" onClick={toggleTheme}>
+              {theme === 'light' ? <Moon /> : <Sun />}
+            </Button>
+          </div>
         </header>
 
         {/* Navigation */}
@@ -132,7 +145,17 @@ function App() {
         <div className=" border-t bg-muted/50 py-6">
           <div className="container mx-auto px-4 text-center text-muted-foreground">
             <p>
-              Built with <strong className="text-foreground">ZFlo</strong> —
+              Built with{' '}
+              <strong className="text-foreground underline">
+                <a
+                  href={appInfo.urls.github}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {appInfo.name}
+                </a>
+              </strong>
+              {'. '}
               Have any questions?{' '}
               <a
                 href="https://discordapp.com/users/297276263322746881"

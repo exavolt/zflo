@@ -19,7 +19,10 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
       '@zflo/core': path.resolve(__dirname, '../../packages/core/src'),
       '@zflo/react': path.resolve(__dirname, '../../packages/react/src'),
-      '@zflo/ui-react-tw': path.resolve(__dirname, '../../packages/ui-react-tw/src'),
+      '@zflo/ui-react-tw': path.resolve(
+        __dirname,
+        '../../packages/ui-react-tw/src'
+      ),
       '@zflo/format-mermaid': path.resolve(
         __dirname,
         '../../packages/format-mermaid/src'
