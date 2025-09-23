@@ -48,6 +48,8 @@ pnpm test
 - [Core Concepts](./docs/core-concepts.md)
 - [Data Format](./docs/data-format.md)
 - [API Reference](./docs/api-reference.md)
+- [AI Agent Integration](./docs/ai-agent-integration.md)
+- [Advanced AI Integrations](./docs/advanced-ai-integrations.md)
 - [Examples](./docs/examples.md)
 
 ## License
