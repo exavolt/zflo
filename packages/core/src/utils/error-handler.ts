@@ -1,15 +1,15 @@
 /**
- * Comprehensive error handling utilities for ZFlo
+ * Comprehensive error handling utilities
  */
 
-export interface ZFloError {
+export interface FlowError {
   code: string;
   message: string;
   context?: Record<string, unknown>;
   cause?: Error;
 }
 
-export class ZFloErrorHandler {
+export class FlowErrorHandler {
   private enableLogging: boolean;
 
   constructor(enableLogging = false) {
@@ -17,14 +17,14 @@ export class ZFloErrorHandler {
   }
 
   /**
-   * Create a standardized ZFlo error
+   * Create a standardized flow error
    */
   createError(
     code: string,
     message: string,
     context?: Record<string, unknown>,
     cause?: Error
-  ): ZFloError {
+  ): FlowError {
     return {
       code,
       message,
@@ -36,67 +36,67 @@ export class ZFloErrorHandler {
   /**
    * Handle and log errors consistently
    */
-  handleError(error: unknown, context?: Record<string, unknown>): ZFloError {
-    let ZFloError: ZFloError;
+  handleError(error: unknown, context?: Record<string, unknown>): FlowError {
+    let flowError: FlowError;
 
-    if (this.isZFloError(error)) {
-      ZFloError = error;
+    if (this.isFlowError(error)) {
+      flowError = error;
     } else if (error instanceof Error) {
-      ZFloError = this.createError(
+      flowError = this.createError(
         'UNKNOWN_ERROR',
         error.message,
         context,
         error
       );
     } else {
-      ZFloError = this.createError('UNKNOWN_ERROR', String(error), context);
+      flowError = this.createError('UNKNOWN_ERROR', String(error), context);
     }
 
     if (this.enableLogging) {
-      console.error('ZFlo Error:', ZFloError);
+      console.error('Flow Error:', flowError);
     }
 
-    return ZFloError;
+    return flowError;
   }
 
   /**
    * Safe execution wrapper with error handling
    */
-  async safeExecute<T>(
+  async safeExecuteAsync<T>(
     operation: () => Promise<T>,
     fallback: T,
     context?: Record<string, unknown>
-  ): Promise<{ success: boolean; result: T; error?: ZFloError }> {
+  ): Promise<{ success: boolean; result: T; error?: FlowError }> {
     try {
       const result = await operation();
       return { success: true, result };
     } catch (error) {
-      const ZFloError = this.handleError(error, context);
-      return { success: false, result: fallback, error: ZFloError };
+      const flowError = this.handleError(error, context);
+      return { success: false, result: fallback, error: flowError };
     }
   }
 
   /**
    * Safe synchronous execution wrapper
    */
-  safeExecuteSync<T>(
+  safeExecute<T>(
     operation: () => T,
     fallback: T,
     context?: Record<string, unknown>
-  ): { success: boolean; result: T; error?: ZFloError } {
+  ): { success: boolean; result: T; error?: FlowError } {
     try {
       const result = operation();
       return { success: true, result };
     } catch (error) {
-      const ZFloError = this.handleError(error, context);
-      return { success: false, result: fallback, error: ZFloError };
+      const flowError = this.handleError(error, context);
+      return { success: false, result: fallback, error: flowError };
     }
   }
 
   /**
-   * Validate if an object is an ZFlo error
+   * Validate if an object is a flow error
    */
-  private isZFloError(obj: unknown): obj is ZFloError {
+  private isFlowError(obj: unknown): obj is FlowError {
     return (
       typeof obj === 'object' &&
       obj !== null &&
@@ -107,7 +107,7 @@ export class ZFloErrorHandler {
 }
 
 /**
- * Common error codes used throughout ZFlo
+ * Common error codes used throughout the flow engine
  */
 export const ErrorCodes = {
   // Flow execution errors
@@ -137,12 +137,12 @@ export const ErrorCodes = {
 /**
  * Global error handler instance
  */
-export const globalErrorHandler = new ZFloErrorHandler();
+export const globalErrorHandler = new FlowErrorHandler();
 
 /**
  * Utility functions for common error scenarios
  */
-export function createNodeNotFoundError(nodeId: string): ZFloError {
+export function createNodeNotFoundError(nodeId: string): FlowError {
   return globalErrorHandler.createError(
     ErrorCodes.NODE_NOT_FOUND,
     `Node not found: ${nodeId}`,
@@ -153,7 +153,7 @@ export function createNodeNotFoundError(nodeId: string): ZFloError {
 export function createConditionEvaluationError(
   condition: string,
   cause?: Error
-): ZFloError {
+): FlowError {
   return globalErrorHandler.createError(
     ErrorCodes.CONDITION_EVALUATION_FAILED,
     `Failed to evaluate condition: ${condition}`,
@@ -165,7 +165,7 @@ export function createConditionEvaluationError(
 export function createStateActionError(
   action: string,
   cause?: Error
-): ZFloError {
+): FlowError {
   return globalErrorHandler.createError(
     ErrorCodes.STATE_ACTION_FAILED,
     `Failed to execute state action: ${action}`,

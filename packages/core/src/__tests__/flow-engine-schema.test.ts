@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { FlowEngine } from '../core/flow-engine';
-import type { ZFFlow } from '../types';
+import type { FlowDefinition } from '../types/flow-types';
 import type { JSONSchema7 } from 'json-schema';
 
 describe('FlowEngine Schema Validation Integration', () => {
@@ -21,9 +21,9 @@ describe('FlowEngine Schema Validation Integration', () => {
   };
 
   const createTestFlow = (
-    globalState: { [key: string]: unknown },
+    initialState: { [key: string]: unknown },
     stateSchema?: JSONSchema7
-  ): ZFFlow => ({
+  ): FlowDefinition => ({
     id: 'test-flow',
     title: 'Test Flow with Schema',
     nodes: [
@@ -50,7 +50,7 @@ describe('FlowEngine Schema Validation Integration', () => {
       },
     ],
     startNodeId: 'start',
-    globalState,
+    initialState,
     stateSchema,
   });
 
@@ -121,7 +121,7 @@ describe('FlowEngine Schema Validation Integration', () => {
       };
 
       // Create flow with action that would make health negative
-      const flowWithInvalidAction: ZFFlow = {
+      const flowWithInvalidAction: FlowDefinition = {
         ...createTestFlow(validState, gameStateSchema),
         nodes: [
           {
@@ -159,7 +159,7 @@ describe('FlowEngine Schema Validation Integration', () => {
         score: 0,
       };
 
-      const flowWithInvalidAction: ZFFlow = {
+      const flowWithInvalidAction: FlowDefinition = {
         ...createTestFlow(validState, gameStateSchema),
         nodes: [
           {
@@ -214,7 +214,7 @@ describe('FlowEngine Schema Validation Integration', () => {
       const flow = createTestFlow(state, gameStateSchema);
 
       // Should work - adding one more item (total 5, within limit)
-      const validFlow: ZFFlow = {
+      const validFlow: FlowDefinition = {
         ...flow,
         nodes: [
           {
@@ -271,7 +271,7 @@ describe('FlowEngine Schema Validation Integration', () => {
         },
       };
 
-      const invalidFlow: ZFFlow = {
+      const invalidFlow: FlowDefinition = {
         id: 'complex-test',
         title: 'Complex Schema Test',
         nodes: [
@@ -284,7 +284,7 @@ describe('FlowEngine Schema Validation Integration', () => {
           },
         ],
         startNodeId: 'start',
-        globalState: state,
+        initialState: state,
         stateSchema: complexSchema,
       };
 
@@ -358,7 +358,7 @@ describe('FlowEngine Schema Validation Integration', () => {
         additionalProperties: false,
       };
 
-      const rpgFlow: ZFFlow = {
+      const rpgFlow: FlowDefinition = {
         id: 'rpg-game',
         title: 'RPG Adventure',
         nodes: [
@@ -395,7 +395,7 @@ describe('FlowEngine Schema Validation Integration', () => {
           },
         ],
         startNodeId: 'start',
-        globalState: {
+        initialState: {
           health: 100,
           mana: 50,
           level: 1,
@@ -409,7 +409,9 @@ describe('FlowEngine Schema Validation Integration', () => {
       const engine = new FlowEngine(rpgFlow);
 
       await engine.start();
-      expect(engine.getCurrentNode()?.node.id).toBe('start');
+      expect(engine.getCurrentContext()?.currentNode.definition.id).toBe(
+        'start'
+      );
 
       await engine.next('to-battle');
       expect(engine.getState().health).toBe(80); // 100 - 20

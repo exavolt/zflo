@@ -6,13 +6,18 @@ import {
   ValidationResult,
   ValidationWarning,
 } from '../types/analysis-types';
-import { NodeType, ZFFlow, ZFNode, XFOutlet } from '../types/flow-types';
+import {
+  NodeType,
+  FlowDefinition,
+  NodeDefinition,
+  OutletDefinition,
+} from '../types/flow-types';
 import { EvaluatorFactory } from '../utils/evaluator-factory';
 import { FlowGraphUtils } from '../utils/graph-utils';
 import { inferNodeTypes } from '../utils/infer-node-types';
 
 interface ValidationContext {
-  flow: ZFFlow;
+  flow: FlowDefinition;
   nodeTypes: Record<string, NodeType>;
   graphUtils: FlowGraphUtils;
 }
@@ -24,7 +29,7 @@ export class FlowValidator {
     this.evaluators = evaluators ?? EvaluatorFactory.getDefaultEvaluators();
   }
 
-  validate(flow: ZFFlow): ValidationResult {
+  validate(flow: FlowDefinition): ValidationResult {
     const errors: ValidationError[] = [];
     const warnings: ValidationWarning[] = [];
     const nodeTypes = inferNodeTypes(flow.nodes);
@@ -139,9 +144,9 @@ export class FlowValidator {
   ): void {
     for (const node of context.flow.nodes) {
       // Check if node uses auto-advance
-      if (!node.isAutoAdvance) continue;
+      if (!node.autoAdvance) continue;
 
-      const autoAdvanceMode = context.flow.autoAdvance || 'default';
+      const autoAdvanceMode = context.flow.autoAdvanceMode || 'default';
 
       if (autoAdvanceMode === 'never') continue;
 
@@ -162,17 +167,21 @@ export class FlowValidator {
    * - Default outlet should be last
    */
   private validateIfElsePathStructure(
-    node: ZFNode,
+    node: NodeDefinition,
     errors: ValidationError[],
     warnings: ValidationWarning[]
   ): void {
-    const paths = node.outlets || [];
-    const conditionalPaths = paths.filter((path: XFOutlet) => path.condition);
-    const defaultPaths = paths.filter((path: XFOutlet) => !path.condition);
-    const autoAdvanceFrom = node.isAutoAdvance ? 'node' : 'flow';
+    const outlets = node.outlets || [];
+    const conditionalOutlets = outlets.filter(
+      (outlet: OutletDefinition) => outlet.condition
+    );
+    const defaultOutlets = outlets.filter(
+      (outlet: OutletDefinition) => !outlet.condition
+    );
+    const autoAdvanceFrom = node.autoAdvance ? 'node' : 'flow';
 
     // Check for multiple default outlets (multiple else clauses)
-    if (defaultPaths.length > 1) {
+    if (defaultOutlets.length > 1) {
       errors.push({
         type: 'invalid_path_structure',
         message: `Auto-advance node "${node.id}" (${autoAdvanceFrom}) has multiple default outlets (else clauses). Only one default outlet is allowed.`,
@@ -181,16 +190,17 @@ export class FlowValidator {
     }
 
     // Check if default outlet is not at the end
-    if (defaultPaths.length === 1 && defaultPaths[0]) {
-      const defaultPathIndex = paths.indexOf(defaultPaths[0]);
-      const lastConditionalPath = conditionalPaths[conditionalPaths.length - 1];
-      const lastConditionalIndex = lastConditionalPath
-        ? paths.indexOf(lastConditionalPath)
+    if (defaultOutlets.length === 1 && defaultOutlets[0]) {
+      const defaultOutletIndex = outlets.indexOf(defaultOutlets[0]);
+      const lastConditionalOutlet =
+        conditionalOutlets[conditionalOutlets.length - 1];
+      const lastConditionalIndex = lastConditionalOutlet
+        ? outlets.indexOf(lastConditionalOutlet)
         : -1;
 
       if (
         lastConditionalIndex >= 0 &&
-        defaultPathIndex < lastConditionalIndex
+        defaultOutletIndex < lastConditionalIndex
       ) {
         warnings.push({
           type: 'suboptimal_path_order',
@@ -201,25 +211,25 @@ export class FlowValidator {
     }
 
     // Check for unreachable outlets (outlets after an always-true condition)
-    for (let i = 0; i < conditionalPaths.length - 1; i++) {
-      const currentPath = conditionalPaths[i];
+    for (let i = 0; i < conditionalOutlets.length - 1; i++) {
+      const currentOutlet = conditionalOutlets[i];
       if (
-        currentPath &&
-        currentPath.condition &&
-        this.isAlwaysTrueCondition(currentPath.condition)
+        currentOutlet &&
+        currentOutlet.condition &&
+        this.isAlwaysTrueCondition(currentOutlet.condition)
       ) {
         warnings.push({
           type: 'unreachable_path',
-          message: `Auto-advance node "${node.id}" (${autoAdvanceFrom}) has paths after an always-true condition "${currentPath.condition}". These paths will never be reached.`,
+          message: `Auto-advance node "${node.id}" (${autoAdvanceFrom}) has outlets after an always-true condition "${currentOutlet.condition}". These outlets will never be reached.`,
           nodeId: node.id,
-          edgeId: currentPath.id,
+          edgeId: currentOutlet.id,
         });
         break;
       }
     }
 
     // Warn if no default outlet and all conditions might be false
-    if (defaultPaths.length === 0 && conditionalPaths.length > 0) {
+    if (defaultOutlets.length === 0 && conditionalOutlets.length > 0) {
       warnings.push({
         type: 'missing_default_path',
         message: `Auto-advance node "${node.id}" (${autoAdvanceFrom}) has only conditional outlets without a default outlet. Consider adding a default outlet (else clause) to handle cases where no conditions are met.`,

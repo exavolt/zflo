@@ -384,7 +384,7 @@ describe('FlowValidator', () => {
             id: 'start',
             title: 'Start',
             content: 'Starting point',
-            isAutoAdvance: true,
+            autoAdvance: true,
             outlets: [
               {
                 id: 'path1',
@@ -428,7 +428,7 @@ describe('FlowValidator', () => {
             id: 'start',
             title: 'Start',
             content: 'Starting point',
-            isAutoAdvance: true,
+            autoAdvance: true,
             outlets: [
               {
                 id: 'path1',
@@ -476,7 +476,7 @@ describe('FlowValidator', () => {
             id: 'start',
             title: 'Start',
             content: 'Starting point',
-            isAutoAdvance: true,
+            autoAdvance: true,
             outlets: [
               {
                 id: 'path1',
@@ -523,7 +523,7 @@ describe('FlowValidator', () => {
             id: 'start',
             title: 'Start',
             content: 'Starting point',
-            isAutoAdvance: true,
+            autoAdvance: true,
             outlets: [
               {
                 id: 'path1',
@@ -574,7 +574,7 @@ describe('FlowValidator', () => {
             id: 'start',
             title: 'Start',
             content: 'Starting point',
-            isAutoAdvance: true,
+            autoAdvance: true,
             outlets: [
               {
                 id: 'path1',
@@ -611,7 +611,7 @@ describe('FlowValidator', () => {
             id: 'start',
             title: 'Start',
             content: 'Starting point',
-            isAutoAdvance: false, // explicitly disabled
+            autoAdvance: false, // explicitly disabled
             outlets: [
               {
                 id: 'path1',
@@ -650,7 +650,7 @@ describe('FlowValidator', () => {
             id: 'decision',
             title: 'Decision Point',
             content: 'Make a choice',
-            isAutoAdvance: true,
+            autoAdvance: true,
             outlets: [
               {
                 id: 'path1',

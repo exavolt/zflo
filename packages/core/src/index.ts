@@ -1,4 +1,4 @@
-// Core exports
+// Core exports - New Architecture
 export * from './types/flow-types';
 export * from './types/analysis-types';
 export * from './types/execution-types';
@@ -14,4 +14,13 @@ export { runPathTests, validateFlow } from './analysis/test-runner';
 export type { FlowAnalysis, AnalysisInsight } from './analysis/flow-analyzer';
 
 // Utils
-export { inferNodeTypes } from './utils/infer-node-types';
+export { inferNodeTypes, getNodeType } from './utils/infer-node-types';
+export { RuntimeFlowFactory } from './utils/runtime-flow-factory';
+export {
+  FlowGraphUtils,
+  createFlowGraph,
+  isNodeReachable,
+  findReachableNodes,
+  findUnreachableNodes,
+  hasCycles,
+} from './utils/graph-utils';

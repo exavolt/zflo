@@ -2,38 +2,39 @@ import { EventEmitter } from 'eventemitter3';
 import { StateManager } from './state-manager';
 import { ContentInterpolator } from '../utils/content-interpolator';
 import {
-  AnnotatedNode,
-  Choice,
-  EngineEventData,
-  EngineOptions,
-  ExecutionResult,
+  RuntimeFlow,
+  RuntimeNode,
+  RuntimeChoice,
+  ExecutionContext,
   ExecutionStep,
+  EngineOptions,
+  EngineEventData,
   IStateManager,
 } from '../types/execution-types';
 import {
-  NodeType,
-  StateRule,
-  ZFFlow,
-  ZFNode,
-  XFOutlet,
+  FlowDefinition,
+  NodeDefinition,
+  OutletDefinition,
 } from '../types/flow-types';
-import { inferNodeTypes } from '../utils/infer-node-types';
+import { RuntimeFlowFactory } from '../utils/runtime-flow-factory';
 
+/**
+ * New FlowEngine implementation using the refactored architecture
+ */
 export class FlowEngine<
   TState extends object = Record<string, unknown>,
 > extends EventEmitter<EngineEventData<TState>> {
-  private flow: ZFFlow;
-  private nodeTypes: Record<string, NodeType>;
+  private runtimeFlow: RuntimeFlow<TState>;
   private stateManager: IStateManager<TState>;
-  private currentNode: ZFNode | null = null;
-  private history: ExecutionStep<TState>[] = [];
   private options: EngineOptions<TState>;
   private contentInterpolator: ContentInterpolator;
 
-  constructor(flow: ZFFlow, options: EngineOptions<TState> = {}) {
+  constructor(
+    flowDefinition: FlowDefinition<TState>,
+    options: EngineOptions<TState> = {}
+  ) {
     super();
-    this.flow = flow;
-    this.nodeTypes = inferNodeTypes(flow.nodes);
+
     this.options = {
       enableHistory: true,
       maxHistorySize: 100,
@@ -41,22 +42,22 @@ export class FlowEngine<
       ...options,
     };
 
-    // Initialize state manager with deep cloned state to avoid reference sharing
-    const initialState = {
-      ...JSON.parse(JSON.stringify(flow.globalState || {})),
-      ...JSON.parse(JSON.stringify(options.initialState || {})),
-    };
+    // Create runtime flow
+    this.runtimeFlow = RuntimeFlowFactory.create(
+      flowDefinition,
+      options.initialState
+    );
 
-    // Use provided StateManager or create default one
+    // Initialize state manager
     if (options.stateManager) {
       this.stateManager = options.stateManager;
     } else {
       this.stateManager = new StateManager<TState>(
-        initialState as TState,
-        flow.stateRules || [],
+        this.runtimeFlow.state,
+        flowDefinition.stateRules || [],
         {
-          expressionLanguage: flow.expressionLanguage ?? 'cel',
-          stateSchema: flow.stateSchema,
+          expressionLanguage: flowDefinition.expressionLanguage ?? 'cel',
+          stateSchema: flowDefinition.stateSchema,
           validateOnChange: true,
         }
       );
@@ -64,271 +65,151 @@ export class FlowEngine<
 
     // Initialize content interpolator
     this.contentInterpolator = new ContentInterpolator({
-      expressionLanguage: flow.expressionLanguage ?? 'cel',
+      expressionLanguage: flowDefinition.expressionLanguage ?? 'cel',
       enableLogging: options.enableLogging ?? false,
     });
 
     // Forward state manager events
-    this.stateManager.on(
-      'stateChange',
-      (data: { oldState: TState; newState: TState }) =>
-        this.emit('stateChange', data)
-    );
-    this.stateManager.on(
-      'error',
-      (data: {
-        error: Error;
-        context?: { type: string; rule?: StateRule };
-      }) => {
-        if (
-          data.context?.type === 'forceTransition' &&
-          data.context.rule?.target
-        ) {
-          // Handle forced transitions from state rules
-          this.handleForcedTransition(data.context.rule.target);
-        } else {
-          this.emit('error', data);
-        }
+    this.stateManager.on('stateChange', (data) => {
+      this.runtimeFlow.state = data.newState;
+      this.emit('stateChange', data);
+    });
+
+    this.stateManager.on('error', (data) => {
+      if (
+        data.context?.type === 'forceTransition' &&
+        data.context.rule?.target
+      ) {
+        this.handleForcedTransition(data.context.rule.target);
+      } else {
+        this.emit('error', data);
       }
-    );
+    });
   }
 
-  async start(): Promise<ExecutionResult<TState>> {
-    const startNode = this.findNodeById(this.flow.startNodeId);
-    if (!startNode) {
+  async start(): Promise<ExecutionContext<TState>> {
+    const startNodeDef = this.runtimeFlow.nodeMap.get(
+      this.runtimeFlow.definition.startNodeId
+    );
+    if (!startNodeDef) {
       throw new Error(
-        `Start node with id "${this.flow.startNodeId}" not found`
+        `Start node with id "${this.runtimeFlow.definition.startNodeId}" not found`
       );
     }
 
-    return this.transitionToNode(startNode);
+    return this.transitionToNode(this.runtimeFlow.definition.startNodeId);
   }
 
-  async next(choiceId?: string): Promise<ExecutionResult<TState>> {
-    if (!this.currentNode) {
+  async next(choiceId?: string): Promise<ExecutionContext<TState>> {
+    if (!this.runtimeFlow.currentNodeId) {
       throw new Error('No current node. Call start() first.');
     }
 
-    let targetNode: ZFNode | null = null;
-    const currentNodeType = this.nodeTypes[this.currentNode.id];
+    const currentNode = this.getCurrentRuntimeNode();
+    let targetNodeId: string | null = null;
 
     if (choiceId) {
-      // Handle user choice (for any node type that has choices)
-      const outletResult = this.findOutletById(choiceId);
-      if (!outletResult || outletResult.fromNodeId !== this.currentNode.id) {
+      // Handle user choice
+      const outletResult = this.runtimeFlow.outletMap.get(choiceId);
+      if (
+        !outletResult ||
+        outletResult.fromNodeId !== this.runtimeFlow.currentNodeId
+      ) {
         throw new Error(`Invalid choice: ${choiceId}`);
       }
-      targetNode = this.findNodeById(outletResult.outlet.to);
+      targetNodeId = outletResult.outlet.to;
     } else {
-      if (currentNodeType === 'decision') {
-        // Handle automatic decision evaluation if no choice provided
-        targetNode = this.evaluateAutomaticDecision(this.currentNode);
-      } else {
-        // Handle automatic progression for action nodes only
-        // Decision nodes should not auto-progress - they wait for user choice
-        if (currentNodeType === 'action') {
-          const outlets = this.getOutlets(this.currentNode.id);
-          if (outlets.length === 1 && outlets[0]) {
-            targetNode = this.findNodeById(outlets[0].to);
-          }
+      // Handle automatic progression
+      if (currentNode.type === 'decision') {
+        targetNodeId = this.evaluateAutomaticDecision(
+          this.runtimeFlow.currentNodeId
+        );
+      } else if (currentNode.type === 'action') {
+        const outlets = this.getOutlets(this.runtimeFlow.currentNodeId);
+        if (outlets.length === 1 && outlets[0]) {
+          targetNodeId = outlets[0].to;
         }
       }
     }
 
-    if (!targetNode && currentNodeType !== 'decision') {
+    if (!targetNodeId && currentNode.type !== 'decision') {
       throw new Error('No valid transition found');
     }
 
-    // If this is a decision node and no choice was made, don't transition
-    if (currentNodeType === 'decision' && !choiceId) {
-      return this.createExecutionResult();
+    if (currentNode.type === 'decision' && !choiceId) {
+      return this.createExecutionContext();
     }
 
-    if (!targetNode) {
+    if (!targetNodeId) {
       throw new Error('No valid transition found');
     }
 
-    return this.transitionToNode(targetNode, choiceId);
+    return this.transitionToNode(targetNodeId, choiceId);
   }
 
-  getCurrentNode(): AnnotatedNode | null {
-    if (!this.currentNode) {
+  getCurrentContext(): ExecutionContext<TState> | null {
+    if (!this.runtimeFlow.currentNodeId) {
       return null;
     }
-    const nodeType = this.nodeTypes[this.currentNode.id];
-    if (!nodeType) {
-      throw new Error(`Node type not found for node: ${this.currentNode.id}`);
-    }
-    return {
-      node: this.getInterpolatedNode(this.currentNode),
-      type: nodeType,
-    };
+    return this.createExecutionContext();
   }
 
   getHistory(): ExecutionStep<TState>[] {
-    return [...this.history];
-  }
-
-  getAvailableChoices(): Choice[] {
-    if (!this.currentNode) {
-      return [];
-    }
-    const currentNodeType = this.nodeTypes[this.currentNode.id];
-    if (currentNodeType === 'end') {
-      return [];
-    }
-
-    const allOutlets = this.getOutlets(this.currentNode.id);
-    const showDisabled = this.options.showDisabledChoices || false;
-    const currentState = this.stateManager.getState();
-
-    let outletsToShow: XFOutlet[];
-    let choices: Choice[];
-    const isSingleChoice = allOutlets.length === 1;
-
-    const singleChoiceDefaultLabel = 'Continue';
-
-    if (showDisabled) {
-      // Show all outlets, mark disabled ones
-      outletsToShow = allOutlets;
-      choices = outletsToShow.map((outlet, index): Choice => {
-        const isEnabled = this.evaluateOutletCondition(outlet);
-        const description =
-          outlet.metadata &&
-          'description' in outlet.metadata &&
-          typeof outlet.metadata.description === 'string'
-            ? outlet.metadata.description
-            : undefined;
-
-        // Get the label with interpolation support
-        let label = this.contentInterpolator.interpolate(
-          outlet.label
-            ? outlet.label
-            : isSingleChoice
-              ? singleChoiceDefaultLabel
-              : 'Choice ' + (index + 1), // Ensure outlets have labels
-          currentState as Record<string, unknown>
-        ).content;
-
-        return {
-          id: outlet.id,
-          label,
-          description,
-          outletId: outlet.id,
-          disabled: !isEnabled,
-          disabledReason:
-            !isEnabled && outlet.condition
-              ? 'Condition not met' // `Condition not met: ${outlet.condition}`
-              : undefined,
-        };
-      });
-    } else {
-      // Only show enabled outlets (current behavior)
-      outletsToShow = allOutlets.filter((outlet) =>
-        this.evaluateOutletCondition(outlet)
-      );
-      choices = outletsToShow.map((outlet, index): Choice => {
-        // Get the label with interpolation support
-        let label = this.contentInterpolator.interpolate(
-          outlet.label
-            ? outlet.label
-            : isSingleChoice
-              ? singleChoiceDefaultLabel
-              : 'Choice ' + (index + 1), // Ensure outlets have labels
-          currentState as Record<string, unknown>
-        ).content;
-
-        return {
-          id: outlet.id,
-          label,
-          description:
-            outlet.metadata &&
-            'description' in outlet.metadata &&
-            typeof outlet.metadata.description === 'string'
-              ? outlet.metadata.description
-              : undefined,
-          outletId: outlet.id,
-        };
-      });
-    }
-
-    // If there's only one enabled outlet forward, create a "Continue" choice
-    const enabledChoices = showDisabled
-      ? choices.filter((choice) => !choice.disabled)
-      : choices;
-
-    if (
-      enabledChoices.length === 1 &&
-      enabledChoices[0] &&
-      !enabledChoices[0].label?.trim()
-    ) {
-      const continueChoice = enabledChoices[0];
-      if (!continueChoice.id || !continueChoice.outletId) {
-        throw new Error('Invalid choice structure: missing required fields');
-      }
-      const targetOutlet = outletsToShow.find(
-        (p) => p.id === continueChoice.id
-      );
-      const targetNode = targetOutlet
-        ? this.findNodeById(targetOutlet.to)
-        : null;
-      return [
-        {
-          ...continueChoice,
-          id: continueChoice.id,
-          outletId: continueChoice.outletId,
-          label: singleChoiceDefaultLabel,
-          description: `Continue to ${targetNode?.title || 'next step'}`,
-        },
-        ...choices.filter((choice) => choice.disabled), // Add any disabled choices if showing them
-      ];
-    }
-
-    return choices;
+    return [...this.runtimeFlow.executionHistory];
   }
 
   isComplete(): boolean {
-    if (!this.currentNode) {
+    if (!this.runtimeFlow.currentNodeId) {
       return false;
     }
-    const currentNodeType = this.nodeTypes[this.currentNode.id];
-    return currentNodeType === 'end';
+    const currentNode = this.getCurrentRuntimeNode();
+    return currentNode.type === 'end';
   }
 
   canGoBack(): boolean {
-    return Boolean(this.options.enableHistory) && this.history.length > 1;
+    return (
+      Boolean(this.options.enableHistory) &&
+      this.runtimeFlow.executionHistory.length > 1
+    );
   }
 
-  goBack(): Promise<ExecutionResult<TState>> {
+  async goBack(): Promise<ExecutionContext<TState>> {
     if (!this.canGoBack()) {
       throw new Error('Cannot go back');
     }
 
     // Remove current step and go to previous
-    this.history.pop();
-    const previousStep = this.history[this.history.length - 1];
+    this.runtimeFlow.executionHistory.pop();
+    const previousStep =
+      this.runtimeFlow.executionHistory[
+        this.runtimeFlow.executionHistory.length - 1
+      ];
     if (!previousStep) {
       throw new Error('No previous step available');
     }
 
     // Restore previous state
     this.stateManager.reset(previousStep.state);
-    this.currentNode = previousStep.node.node;
+    this.runtimeFlow.currentNodeId = previousStep.nodeId;
+    this.runtimeFlow.state = previousStep.state;
 
-    return Promise.resolve(this.createExecutionResult());
+    return this.createExecutionContext();
   }
 
   reset(): void {
-    this.currentNode = null;
-    this.history = [];
-    // Deep clone globalState to avoid reference sharing on reset
-    this.stateManager.reset(
-      JSON.parse(JSON.stringify(this.flow.globalState || {}))
-    );
+    this.runtimeFlow.currentNodeId = null;
+    this.runtimeFlow.executionHistory = [];
+    const initialState = {
+      ...JSON.parse(
+        JSON.stringify(this.runtimeFlow.definition.initialState || {})
+      ),
+    } as TState;
+    this.runtimeFlow.state = initialState;
+    this.stateManager.reset(initialState);
   }
 
   getState(): TState {
-    return this.stateManager.getState();
+    return this.runtimeFlow.state;
   }
 
   getStateManager(): IStateManager<TState> {
@@ -336,121 +217,201 @@ export class FlowEngine<
   }
 
   private async transitionToNode(
-    node: ZFNode,
+    nodeId: string,
     choiceId?: string
-  ): Promise<ExecutionResult<TState>> {
+  ): Promise<ExecutionContext<TState>> {
+    const nodeDef = this.runtimeFlow.nodeMap.get(nodeId);
+    if (!nodeDef) {
+      throw new Error(`Node with id "${nodeId}" not found`);
+    }
+
     // Exit current node
-    if (this.currentNode) {
+    if (this.runtimeFlow.currentNodeId) {
+      const currentNode = this.getCurrentRuntimeNode();
       this.emit('nodeExit', {
-        node: this.currentNode,
-        choice: choiceId,
-        state: this.stateManager.getState(),
+        nodeId: this.runtimeFlow.currentNodeId,
+        node: currentNode,
+        choiceId,
+        state: this.runtimeFlow.state,
       });
     }
 
     // Execute outlet actions if transitioning via a specific outlet
-    if (choiceId && this.currentNode) {
-      const outletResult = this.findOutletById(choiceId);
+    if (choiceId) {
+      const outletResult = this.runtimeFlow.outletMap.get(choiceId);
       if (outletResult?.outlet.actions) {
         this.stateManager.executeActions(outletResult.outlet.actions);
       }
     }
 
     // Update current node
-    this.currentNode = node;
+    this.runtimeFlow.currentNodeId = nodeId;
 
     // Execute node actions
-    if (node.actions) {
-      this.stateManager.executeActions(node.actions);
+    if (nodeDef.actions) {
+      this.stateManager.executeActions(nodeDef.actions);
     }
 
     // Add to history
     if (this.options.enableHistory) {
-      const nodeType = this.nodeTypes[node.id];
-      if (!nodeType) {
-        throw new Error(`Node type not found for node: ${node.id}`);
-      }
       const step: ExecutionStep<TState> = {
-        node: { node, type: nodeType },
-        choice: choiceId,
+        nodeId,
+        choiceId,
         timestamp: new Date(),
         state: this.stateManager.getState(),
       };
-      this.history.push(step);
+      this.runtimeFlow.executionHistory.push(step);
 
       // Limit history size
       const maxSize = this.options.maxHistorySize || 100;
-      if (this.history.length > maxSize) {
-        this.history.shift();
+      if (this.runtimeFlow.executionHistory.length > maxSize) {
+        this.runtimeFlow.executionHistory.shift();
       }
     }
 
-    // Emit node enter event
+    // Create runtime node and emit enter event
+    const runtimeNode = this.getCurrentRuntimeNode();
     this.emit('nodeEnter', {
-      node,
-      state: this.stateManager.getState(),
+      nodeId,
+      node: runtimeNode,
+      state: this.runtimeFlow.state,
     });
 
-    // Check for auto-advance conditions
-    const availableOutlets = this.getOutlets(node.id);
-    if (this.shouldAutoAdvance(node, availableOutlets)) {
-      const selectedOutlet = this.selectAutoAdvanceOutlet(
-        node,
-        availableOutlets
+    // Check for auto-advance
+    const availableOutlets = this.getOutlets(nodeId);
+    if (this.shouldAutoAdvance(nodeDef, availableOutlets)) {
+      const selectedOutlet = this.selectAutoAdvanceOutlet(availableOutlets);
+      if (selectedOutlet) {
+        const targetNodeDef = this.runtimeFlow.nodeMap.get(selectedOutlet.to);
+        if (targetNodeDef) {
+          const targetRuntimeNode = RuntimeFlowFactory.createRuntimeNode(
+            this.runtimeFlow.definition,
+            selectedOutlet.to,
+            this.runtimeFlow
+          );
+
+          this.emit('autoAdvance', {
+            from: runtimeNode,
+            to: targetRuntimeNode,
+            condition: selectedOutlet.condition,
+            outletId: selectedOutlet.id,
+          });
+
+          return this.transitionToNode(selectedOutlet.to, selectedOutlet.id);
+        }
+      }
+    }
+
+    return this.createExecutionContext();
+  }
+
+  private getCurrentRuntimeNode(): RuntimeNode {
+    if (!this.runtimeFlow.currentNodeId) {
+      throw new Error('No current node');
+    }
+    return RuntimeFlowFactory.createRuntimeNode(
+      this.runtimeFlow.definition,
+      this.runtimeFlow.currentNodeId,
+      this.runtimeFlow
+    );
+  }
+
+  private createExecutionContext(): ExecutionContext<TState> {
+    const currentNode = this.getCurrentRuntimeNode();
+    const availableChoices = this.getAvailableChoices();
+
+    return {
+      flow: this.runtimeFlow,
+      currentNode: this.getInterpolatedRuntimeNode(currentNode),
+      availableChoices,
+      canGoBack: this.canGoBack(),
+      isComplete: this.isComplete(),
+    };
+  }
+
+  private getInterpolatedRuntimeNode(node: RuntimeNode): RuntimeNode {
+    const currentState = this.runtimeFlow.state;
+    let interpolatedNode = { ...node };
+
+    // Interpolate title
+    if (
+      node.definition.title &&
+      this.contentInterpolator.hasInterpolations(node.definition.title)
+    ) {
+      const titleResult = this.contentInterpolator.interpolate(
+        node.definition.title,
+        currentState as Record<string, unknown>
       );
-      if (!selectedOutlet) {
-        this.emit('error', {
-          error: new Error(
-            `No valid outlet found for auto-advance from node "${node.id}"`
-          ),
-          context: {
-            node,
-            availableOutlets,
-          },
-        });
-        return this.createExecutionResult();
+      interpolatedNode.interpolatedTitle = titleResult.content;
+    }
+
+    // Interpolate content
+    if (
+      node.definition.content &&
+      this.contentInterpolator.hasInterpolations(node.definition.content)
+    ) {
+      const contentResult = this.contentInterpolator.interpolate(
+        node.definition.content,
+        currentState as Record<string, unknown>
+      );
+      interpolatedNode.interpolatedContent = contentResult.content;
+    }
+
+    return interpolatedNode;
+  }
+
+  private getAvailableChoices(): RuntimeChoice[] {
+    if (!this.runtimeFlow.currentNodeId) {
+      return [];
+    }
+
+    const currentNode = this.getCurrentRuntimeNode();
+    if (currentNode.type === 'end') {
+      return [];
+    }
+
+    const allOutlets = this.getOutlets(this.runtimeFlow.currentNodeId);
+    const showDisabled = this.options.showDisabledChoices || false;
+    const currentState = this.runtimeFlow.state;
+
+    const choices: RuntimeChoice[] = [];
+
+    for (const outlet of allOutlets) {
+      const isEnabled = this.evaluateOutletCondition(outlet);
+
+      if (!showDisabled && !isEnabled) {
+        continue;
       }
 
-      const nodeTo = this.flow.nodes.find((n) => n.id === selectedOutlet.to);
-      if (!nodeTo) {
-        this.emit('error', {
-          error: new Error(`Node with id "${selectedOutlet.to}" not found`),
-          context: {
-            node,
-            outlet: selectedOutlet,
-          },
-        });
-        return this.createExecutionResult();
+      let label = outlet.label || 'Continue';
+      if (this.contentInterpolator.hasInterpolations(label)) {
+        const labelResult = this.contentInterpolator.interpolate(
+          label,
+          currentState as Record<string, unknown>
+        );
+        label = labelResult.content;
       }
 
-      this.emit('autoAdvance', {
-        from: node,
-        to: nodeTo,
-        condition: selectedOutlet.condition,
+      choices.push({
+        outletId: outlet.id,
+        label,
+        description: outlet.metadata?.description as string,
+        isEnabled,
+        disabledReason:
+          !isEnabled && outlet.condition ? 'Condition not met' : undefined,
+        metadata: outlet.metadata,
       });
-
-      return this.transitionToNode(nodeTo, selectedOutlet.id);
     }
 
-    return this.createExecutionResult();
+    return choices;
   }
 
-  private evaluateAutomaticDecision(node: ZFNode): ZFNode | null {
-    // Get available outlets and sort by priority
-    const availableOutlets = this.getOutlets(node.id);
-    const sortedOutlets = [...availableOutlets];
-
-    // Find first outlet with satisfied condition
-    for (const outlet of sortedOutlets) {
-      if (this.evaluateOutletCondition(outlet)) {
-        return this.findNodeById(outlet.to);
-      }
-    }
-
-    return null;
+  private getOutlets(nodeId: string): OutletDefinition[] {
+    const nodeDef = this.runtimeFlow.nodeMap.get(nodeId);
+    return nodeDef?.outlets || [];
   }
 
-  private evaluateOutletCondition(outlet: XFOutlet): boolean {
+  private evaluateOutletCondition(outlet: OutletDefinition): boolean {
     if (!outlet.condition) return true;
 
     try {
@@ -464,15 +425,44 @@ export class FlowEngine<
     }
   }
 
-  /**
-   * Selects the appropriate outlet for auto-advance using if-else style logic.
-   * Evaluates outlets in order, returning the first outlet whose condition is true.
-   * If no conditional outlets match, returns the default outlet (one without condition).
-   */
+  private evaluateAutomaticDecision(nodeId: string): string | null {
+    const outlets = this.getOutlets(nodeId);
+
+    for (const outlet of outlets) {
+      if (this.evaluateOutletCondition(outlet)) {
+        return outlet.to;
+      }
+    }
+
+    return null;
+  }
+
+  private shouldAutoAdvance(
+    nodeDef: NodeDefinition,
+    availableOutlets: OutletDefinition[]
+  ): boolean {
+    if (
+      this.runtimeFlow.definition.autoAdvanceMode === 'never' ||
+      this.options.autoAdvance === 'never'
+    ) {
+      return false;
+    }
+
+    if (nodeDef.autoAdvance) {
+      return this.selectAutoAdvanceOutlet(availableOutlets) !== null;
+    } else if (
+      this.runtimeFlow.definition.autoAdvanceMode === 'always' ||
+      this.options.autoAdvance === 'always'
+    ) {
+      return this.selectAutoAdvanceOutlet(availableOutlets) !== null;
+    }
+
+    return false;
+  }
+
   private selectAutoAdvanceOutlet(
-    _node: ZFNode,
-    availableOutlets: XFOutlet[]
-  ): XFOutlet | null {
+    availableOutlets: OutletDefinition[]
+  ): OutletDefinition | null {
     // Separate conditional and default outlets
     const conditionalOutlets = availableOutlets.filter(
       (outlet) => outlet.condition
@@ -481,92 +471,20 @@ export class FlowEngine<
       (outlet) => !outlet.condition
     );
 
-    // Evaluate conditional outlets in order (if-else if logic)
+    // Evaluate conditional outlets first
     for (const outlet of conditionalOutlets) {
       if (this.evaluateOutletCondition(outlet)) {
         return outlet;
       }
     }
 
-    // If no conditional outlet matches, use the default outlet (else clause)
-    if (defaultOutlets.length > 0 && defaultOutlets[0]) {
-      return defaultOutlets[0];
-    }
-
-    // No valid outlet found
-    return null;
-  }
-
-  /**
-   * Get a node with interpolated content and title
-   */
-  private getInterpolatedNode(node: ZFNode): ZFNode {
-    const currentState = this.stateManager.getState();
-    let interpolatedNode = { ...node };
-    let hasAnyInterpolations = false;
-    const allErrors: string[] = [];
-
-    // Interpolate node title if it has interpolations
-    if (node.title && this.contentInterpolator.hasInterpolations(node.title)) {
-      const titleResult = this.contentInterpolator.interpolate(
-        node.title,
-        currentState as Record<string, unknown>
-      );
-      interpolatedNode.title = titleResult.content;
-      hasAnyInterpolations = true;
-      allErrors.push(...titleResult.errors);
-    }
-
-    // Interpolate node content if it has interpolations
-    if (
-      node.content &&
-      this.contentInterpolator.hasInterpolations(node.content)
-    ) {
-      const contentResult = this.contentInterpolator.interpolate(
-        node.content,
-        currentState as Record<string, unknown>
-      );
-      interpolatedNode.content = contentResult.content;
-      hasAnyInterpolations = true;
-      allErrors.push(...contentResult.errors);
-    }
-
-    // Log any interpolation errors if logging is enabled
-    if (allErrors.length > 0 && this.options.enableLogging) {
-      console.warn(`Interpolation errors for node "${node.id}":`, allErrors);
-    }
-
-    // Return original node if no interpolations were found
-    if (!hasAnyInterpolations) {
-      return node;
-    }
-
-    return interpolatedNode;
-  }
-
-  private createExecutionResult(): ExecutionResult<TState> {
-    if (!this.currentNode) {
-      throw new Error('No current node. Call start() first.');
-    }
-    const nodeType = this.nodeTypes[this.currentNode.id];
-    if (!nodeType) {
-      throw new Error(`Node type not found for node: ${this.currentNode.id}`);
-    }
-    return {
-      node: {
-        node: this.getInterpolatedNode(this.currentNode),
-        type: nodeType,
-      },
-      choices: this.getAvailableChoices(),
-      isComplete: this.isComplete(),
-      canGoBack: this.canGoBack(),
-      state: this.stateManager.getState(),
-    };
+    // Use default outlet if no conditional matches
+    return defaultOutlets[0] || null;
   }
 
   private handleForcedTransition(targetNodeId: string): void {
-    const targetNode = this.findNodeById(targetNodeId);
-    if (!targetNode) {
+    const targetNodeDef = this.runtimeFlow.nodeMap.get(targetNodeId);
+    if (!targetNodeDef) {
       this.emit('error', {
         error: new Error(
           `Target node "${targetNodeId}" not found for forced transition`
@@ -576,56 +494,11 @@ export class FlowEngine<
       return;
     }
 
-    this.transitionToNode(targetNode).catch((error) => {
+    this.transitionToNode(targetNodeId).catch((error) => {
       this.emit('error', {
         error,
         context: { type: 'forcedTransition', targetNodeId },
       });
     });
-  }
-
-  private shouldAutoAdvance(
-    node: ZFNode,
-    availableOutlets: XFOutlet[]
-  ): boolean {
-    if (
-      this.flow.autoAdvance === 'never' ||
-      this.options.autoAdvance === 'never'
-    ) {
-      return false;
-    }
-    if (node.isAutoAdvance) {
-      return this.selectAutoAdvanceOutlet(node, availableOutlets) !== null;
-    } else if (
-      this.flow.autoAdvance === 'always' ||
-      this.options.autoAdvance === 'always'
-    ) {
-      return this.selectAutoAdvanceOutlet(node, availableOutlets) !== null;
-    } else {
-      return false;
-    }
-  }
-
-  private findNodeById(id: string): ZFNode | null {
-    return this.flow.nodes.find((node) => node.id === id) || null;
-  }
-
-  private getOutlets(nodeId: string): XFOutlet[] {
-    const node = this.findNodeById(nodeId);
-    return node?.outlets || [];
-  }
-
-  private findOutletById(
-    outletId: string
-  ): { outlet: XFOutlet; fromNodeId: string } | null {
-    for (const node of this.flow.nodes) {
-      if (node.outlets) {
-        const outlet = node.outlets.find((p) => p.id === outletId);
-        if (outlet) {
-          return { outlet, fromNodeId: node.id };
-        }
-      }
-    }
-    return null;
   }
 }

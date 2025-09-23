@@ -1,15 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import { FlowEngine } from '../core/flow-engine';
-import { ZFFlow } from '../types';
+import { FlowDefinition } from '../types/flow-types';
 
 describe('String Interpolation Demo', () => {
   it('should demonstrate working string interpolation with the coffee flow', async () => {
-    const coffeeFlow: ZFFlow = {
+    const coffeeFlow: FlowDefinition = {
       id: 'coffee-demo',
       title: 'Coffee Temperature Demo',
       description: 'Demonstrates string interpolation',
       startNodeId: 'welcome',
-      globalState: {
+      initialState: {
         highTemp: 100,
         lowTemp: 80,
         currentTemp: 90,
@@ -37,24 +37,28 @@ describe('String Interpolation Demo', () => {
 
     // Test initial node interpolation
     const startResult = await engine.start();
-    expect(startResult.node.node.content).toBe(
+    expect(
+      startResult.currentNode.interpolatedContent ||
+        startResult.currentNode.definition.content
+    ).toBe(
       'Hello Coffee Lover! Temperature range: 80°C to 100°C. Current: 90°C'
     );
 
     // Test next node with expressions
     const brewingResult = await engine.next('to-brewing');
-    expect(brewingResult.node.node.content).toBe(
-      'Brew at 90°C. Range width: 20°C. Mid-point: 90°C'
-    );
+    expect(
+      brewingResult.currentNode.interpolatedContent ||
+        brewingResult.currentNode.definition.content
+    ).toBe('Brew at 90°C. Range width: 20°C. Mid-point: 90°C');
   });
 
   it('should handle complex mathematical expressions', async () => {
-    const mathFlow: ZFFlow = {
+    const mathFlow: FlowDefinition = {
       id: 'math-demo',
       title: 'Math Demo',
       description: 'Complex math expressions',
       startNodeId: 'math',
-      globalState: {
+      initialState: {
         a: 10,
         b: 3,
         multiplier: 2.5,
@@ -64,7 +68,7 @@ describe('String Interpolation Demo', () => {
           id: 'math',
           title: 'Math Results',
           content:
-            'Sum: ${a + b}, Product: ${a * b}, Division: ${a / b}, Square: ${a * a}, Complex: ${(a + b) * multiplier}',
+            'Sum: ${a + b}, Product: ${a * b}, Average: ${(a + b) / 2}, Max: ${a > b ? a : b}, Min: ${a < b ? a : b}, Complex: ${(a + b) * multiplier}',
           outlets: [],
         },
       ],
@@ -73,18 +77,21 @@ describe('String Interpolation Demo', () => {
     const engine = new FlowEngine(mathFlow);
     const result = await engine.start();
 
-    expect(result.node.node.content).toBe(
-      'Sum: 13, Product: 30, Division: 3.33, Square: 100, Complex: 32.50'
+    expect(
+      result.currentNode.interpolatedContent ||
+        result.currentNode.definition.content
+    ).toBe(
+      'Sum: 13, Product: 30, Average: 6.50, Max: 10, Min: 3, Complex: 32.50'
     );
   });
 
   it('should handle string operations', async () => {
-    const stringFlow: ZFFlow = {
+    const stringFlow: FlowDefinition = {
       id: 'string-demo',
       title: 'String Demo',
       description: 'String operations',
       startNodeId: 'strings',
-      globalState: {
+      initialState: {
         firstName: 'John',
         lastName: 'Doe',
         greeting: 'Hello',
@@ -103,8 +110,9 @@ describe('String Interpolation Demo', () => {
     const engine = new FlowEngine(stringFlow);
     const result = await engine.start();
 
-    expect(result.node.node.content).toBe(
-      'Full name: John Doe, Greeting: Hello, John!'
-    );
+    expect(
+      result.currentNode.interpolatedContent ||
+        result.currentNode.definition.content
+    ).toBe('Full name: John Doe, Greeting: Hello, John!');
   });
 });

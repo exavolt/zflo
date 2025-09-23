@@ -1,6 +1,10 @@
 //
 
-import { ZFFlow, ZFNode, XFOutlet } from '../types/flow-types';
+import {
+  FlowDefinition,
+  NodeDefinition,
+  OutletDefinition,
+} from '../types/flow-types';
 import { LRUCache } from './performance-cache';
 
 /**
@@ -12,7 +16,7 @@ export interface GraphTraversalResult {
   reachableNodes: Set<string>;
   visitedPaths: Set<string>;
   nodeDepths: Map<string, number>;
-  pathsFromNode: Map<string, XFOutlet[]>;
+  outletsFromNode: Map<string, OutletDefinition[]>;
 }
 
 export interface PathExplorationOptions {
@@ -25,7 +29,7 @@ export interface PathExplorationOptions {
 export interface PathExplorationResult {
   allPaths: Array<{
     nodeIds: string[];
-    pathIds: string[];
+    outletIds: string[];
     depth: number;
     state?: unknown;
   }>;
@@ -39,16 +43,19 @@ export interface PathExplorationResult {
  * Comprehensive graph utilities for ZFlo flow analysis
  */
 export class FlowGraphUtils {
-  private flow: ZFFlow;
-  private nodeMap: Map<string, ZFNode>;
-  private pathMap: Map<string, { path: XFOutlet; fromNodeId: string }>;
+  private flow: FlowDefinition;
+  private nodeMap: Map<string, NodeDefinition>;
+  private outletMap: Map<
+    string,
+    { outlet: OutletDefinition; fromNodeId: string }
+  >;
   private reachabilityCache: LRUCache<string, Set<string>>;
   private depthCache: LRUCache<string, Map<string, number>>;
 
-  constructor(flow: ZFFlow) {
+  constructor(flow: FlowDefinition) {
     this.flow = flow;
     this.nodeMap = new Map();
-    this.pathMap = new Map();
+    this.outletMap = new Map();
     this.reachabilityCache = new LRUCache({ maxSize: 50, ttl: 300000 });
     this.depthCache = new LRUCache({ maxSize: 50, ttl: 300000 });
 
@@ -57,11 +64,11 @@ export class FlowGraphUtils {
       this.nodeMap.set(node.id, node);
     }
 
-    // Build path lookup map
+    // Build outlet lookup map
     for (const node of flow.nodes) {
       if (node.outlets) {
-        for (const path of node.outlets) {
-          this.pathMap.set(path.id, { path, fromNodeId: node.id });
+        for (const outlet of node.outlets) {
+          this.outletMap.set(outlet.id, { outlet, fromNodeId: node.id });
         }
       }
     }
@@ -70,38 +77,41 @@ export class FlowGraphUtils {
   /**
    * Find a node by ID
    */
-  findNode(nodeId: string): ZFNode | null {
+  findNode(nodeId: string): NodeDefinition | null {
     return this.nodeMap.get(nodeId) || null;
   }
 
   /**
-   * Find a path by ID with its source node
+   * Find an outlet by ID with its source node
    */
-  findPath(pathId: string): { path: XFOutlet; fromNodeId: string } | null {
-    return this.pathMap.get(pathId) || null;
+  findOutlet(
+    outletId: string
+  ): { outlet: OutletDefinition; fromNodeId: string } | null {
+    return this.outletMap.get(outletId) || null;
   }
 
   /**
-   * Get all outgoing paths from a node
+   * Get all outgoing outlets from a node
    */
-  getOutgoingPaths(nodeId: string): XFOutlet[] {
+  getOutgoingOutlets(nodeId: string): OutletDefinition[] {
     const node = this.nodeMap.get(nodeId);
     return node?.outlets || [];
   }
 
   /**
-   * Get all incoming paths to a node
+   * Get all incoming outlets to a node
    */
-  getIncomingPaths(
+  getIncomingOutlets(
     nodeId: string
-  ): Array<{ path: XFOutlet; fromNodeId: string }> {
-    const incoming: Array<{ path: XFOutlet; fromNodeId: string }> = [];
+  ): Array<{ outlet: OutletDefinition; fromNodeId: string }> {
+    const incoming: Array<{ outlet: OutletDefinition; fromNodeId: string }> =
+      [];
 
     for (const node of this.flow.nodes) {
       if (node.outlets) {
-        for (const path of node.outlets) {
-          if (path.to === nodeId) {
-            incoming.push({ path, fromNodeId: node.id });
+        for (const outlet of node.outlets) {
+          if (outlet.to === nodeId) {
+            incoming.push({ outlet, fromNodeId: node.id });
           }
         }
       }
@@ -132,10 +142,10 @@ export class FlowGraphUtils {
 
       reachable.add(nodeId);
 
-      const outgoingPaths = this.getOutgoingPaths(nodeId);
-      for (const path of outgoingPaths) {
-        if (!reachable.has(path.to)) {
-          queue.push(path.to);
+      const outgoingOutlets = this.getOutgoingOutlets(nodeId);
+      for (const outlet of outgoingOutlets) {
+        if (!reachable.has(outlet.to)) {
+          queue.push(outlet.to);
         }
       }
     }
@@ -176,10 +186,10 @@ export class FlowGraphUtils {
 
       if (nodeId === targetNodeId) return true;
 
-      const outgoingPaths = this.getOutgoingPaths(nodeId);
-      for (const path of outgoingPaths) {
-        if (!visited.has(path.to)) {
-          queue.push(path.to);
+      const outgoingOutlets = this.getOutgoingOutlets(nodeId);
+      for (const outlet of outgoingOutlets) {
+        if (!visited.has(outlet.to)) {
+          queue.push(outlet.to);
         }
       }
     }
@@ -202,10 +212,10 @@ export class FlowGraphUtils {
       if (!node) return depth;
 
       let maxDepth = depth;
-      const outgoingPaths = this.getOutgoingPaths(nodeId);
+      const outgoingOutlets = this.getOutgoingOutlets(nodeId);
 
-      for (const path of outgoingPaths) {
-        maxDepth = Math.max(maxDepth, dfs(path.to, depth + 1));
+      for (const outlet of outgoingOutlets) {
+        maxDepth = Math.max(maxDepth, dfs(outlet.to, depth + 1));
       }
 
       return maxDepth;
@@ -238,10 +248,10 @@ export class FlowGraphUtils {
       if (depths.has(nodeId)) continue;
       depths.set(nodeId, depth);
 
-      const outgoingPaths = this.getOutgoingPaths(nodeId);
-      for (const path of outgoingPaths) {
-        if (!depths.has(path.to)) {
-          queue.push({ nodeId: path.to, depth: depth + 1 });
+      const outgoingOutlets = this.getOutgoingOutlets(nodeId);
+      for (const outlet of outgoingOutlets) {
+        if (!depths.has(outlet.to)) {
+          queue.push({ nodeId: outlet.to, depth: depth + 1 });
         }
       }
     }
@@ -265,9 +275,9 @@ export class FlowGraphUtils {
 
       visiting.add(nodeId);
 
-      const outgoingPaths = this.getOutgoingPaths(nodeId);
-      for (const path of outgoingPaths) {
-        if (dfs(path.to)) return true;
+      const outgoingOutlets = this.getOutgoingOutlets(nodeId);
+      for (const outlet of outgoingOutlets) {
+        if (dfs(outlet.to)) return true;
       }
 
       visiting.delete(nodeId);
@@ -286,16 +296,16 @@ export class FlowGraphUtils {
     const reachableNodes = this.findReachableNodes(start);
     const nodeDepths = this.calculateNodeDepths(start);
     const visitedPaths = new Set<string>();
-    const pathsFromNode = new Map<string, XFOutlet[]>();
+    const outletsFromNode = new Map<string, OutletDefinition[]>();
 
-    // Collect all visited paths and organize by source node
+    // Collect all visited outlets and organize by source node
     for (const nodeId of reachableNodes) {
-      const outgoingPaths = this.getOutgoingPaths(nodeId);
-      pathsFromNode.set(nodeId, outgoingPaths);
+      const outgoingOutlets = this.getOutgoingOutlets(nodeId);
+      outletsFromNode.set(nodeId, outgoingOutlets);
 
-      for (const path of outgoingPaths) {
-        if (reachableNodes.has(path.to)) {
-          visitedPaths.add(path.id);
+      for (const outlet of outgoingOutlets) {
+        if (reachableNodes.has(outlet.to)) {
+          visitedPaths.add(outlet.id);
         }
       }
     }
@@ -304,7 +314,7 @@ export class FlowGraphUtils {
       reachableNodes,
       visitedPaths,
       nodeDepths,
-      pathsFromNode,
+      outletsFromNode,
     };
   }
 
@@ -321,7 +331,7 @@ export class FlowGraphUtils {
 
     const allPaths: Array<{
       nodeIds: string[];
-      pathIds: string[];
+      outletIds: string[];
       depth: number;
       state?: unknown;
     }> = [];
@@ -332,7 +342,7 @@ export class FlowGraphUtils {
         path: [this.flow.startNodeId],
         pathIds: [] as string[],
         depth: 1,
-        state: includeState ? { ...this.flow.globalState } : undefined,
+        state: includeState ? { ...this.flow.initialState } : undefined,
       },
     ];
 
@@ -358,39 +368,39 @@ export class FlowGraphUtils {
       const node = this.findNode(current.nodeId);
       if (!node) continue;
 
-      const outgoingPaths = this.getOutgoingPaths(current.nodeId);
+      const outgoingOutlets = this.getOutgoingOutlets(current.nodeId);
 
-      // If no outgoing paths or max depth reached, this is a complete path
-      if (outgoingPaths.length === 0 || current.depth >= maxDepth) {
+      // If no outgoing outlets or max depth reached, this is a complete path
+      if (outgoingOutlets.length === 0 || current.depth >= maxDepth) {
         allPaths.push({
           nodeIds: current.path,
-          pathIds: current.pathIds,
+          outletIds: current.pathIds,
           depth: current.depth,
           state: current.state,
         });
         continue;
       }
 
-      // Explore each outgoing path
-      for (const path of outgoingPaths) {
-        // Evaluate path condition if evaluator provided
-        if (conditionEvaluator && path.condition && current.state) {
+      // Explore each outgoing outlet
+      for (const outlet of outgoingOutlets) {
+        // Evaluate outlet condition if evaluator provided
+        if (conditionEvaluator && outlet.condition && current.state) {
           try {
-            if (!conditionEvaluator(path.condition, current.state)) {
-              continue; // Skip this path
+            if (!conditionEvaluator(outlet.condition, current.state)) {
+              continue; // Skip this outlet
             }
           } catch {
             continue; // Skip on evaluation error
           }
         }
 
-        const newPath = [...current.path, path.to];
-        const newPathIds = [...current.pathIds, path.id];
+        const newPath = [...current.path, outlet.to];
+        const newOutletIds = [...current.pathIds, outlet.id];
 
         queue.push({
-          nodeId: path.to,
+          nodeId: outlet.to,
           path: newPath,
-          pathIds: newPathIds,
+          pathIds: newOutletIds,
           depth: current.depth + 1,
           state: current.state ? { ...current.state } : undefined,
         });
@@ -441,7 +451,7 @@ export class FlowGraphUtils {
 /**
  * Create a FlowGraphUtils instance for a flow
  */
-export function createFlowGraph(flow: ZFFlow): FlowGraphUtils {
+export function createFlowGraph(flow: FlowDefinition): FlowGraphUtils {
   return new FlowGraphUtils(flow);
 }
 
@@ -449,7 +459,7 @@ export function createFlowGraph(flow: ZFFlow): FlowGraphUtils {
  * Quick check if a node is reachable
  */
 export function isNodeReachable(
-  flow: ZFFlow,
+  flow: FlowDefinition,
   targetNodeId: string,
   startNodeId?: string
 ): boolean {
@@ -461,7 +471,7 @@ export function isNodeReachable(
  * Quick find of all reachable nodes
  */
 export function findReachableNodes(
-  flow: ZFFlow,
+  flow: FlowDefinition,
   startNodeId?: string
 ): Set<string> {
   const graph = new FlowGraphUtils(flow);
@@ -472,7 +482,7 @@ export function findReachableNodes(
  * Quick find of unreachable nodes
  */
 export function findUnreachableNodes(
-  flow: ZFFlow,
+  flow: FlowDefinition,
   startNodeId?: string
 ): Set<string> {
   const graph = new FlowGraphUtils(flow);
@@ -482,7 +492,7 @@ export function findUnreachableNodes(
 /**
  * Quick cycle detection
  */
-export function hasCycles(flow: ZFFlow, startNodeId?: string): boolean {
+export function hasCycles(flow: FlowDefinition, startNodeId?: string): boolean {
   const graph = new FlowGraphUtils(flow);
   return graph.hasCycles(startNodeId);
 }

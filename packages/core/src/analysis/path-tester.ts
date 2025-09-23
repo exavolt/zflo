@@ -3,7 +3,12 @@
 import { ExpressionEvaluator } from '../core/expression-evaluator';
 import { FlowEngine } from '../core/flow-engine';
 import { ExpressionLanguage } from '../types/expression-types';
-import { NodeType, ZFFlow, ZFNode, XFOutlet } from '../types/flow-types';
+import {
+  NodeType,
+  FlowDefinition,
+  NodeDefinition,
+  OutletDefinition,
+} from '../types/flow-types';
 import { EvaluatorFactory } from '../utils/evaluator-factory';
 import { inferNodeTypes } from '../utils/infer-node-types';
 import { StateActionExecutor } from '../utils/state-executor';
@@ -55,7 +60,7 @@ export interface CoverageReport {
 }
 
 export class PathTester {
-  private flow: ZFFlow;
+  private flow: FlowDefinition;
   private nodeTypes: Record<string, NodeType>;
   private maxPaths: number;
   private maxSteps: number;
@@ -63,7 +68,11 @@ export class PathTester {
   private defaultLanguage: ExpressionLanguage;
   private actionExecutor: StateActionExecutor;
 
-  constructor(flow: ZFFlow, maxPaths: number = 1000, maxSteps: number = 100) {
+  constructor(
+    flow: FlowDefinition,
+    maxPaths: number = 1000,
+    maxSteps: number = 100
+  ) {
     this.flow = flow;
     this.nodeTypes = inferNodeTypes(flow.nodes);
     this.maxPaths = maxPaths;
@@ -99,7 +108,7 @@ export class PathTester {
       {
         nodeId: this.flow.startNodeId,
         path: [this.flow.startNodeId],
-        state: { ...this.flow.globalState },
+        state: { ...this.flow.initialState },
         choices: [],
       },
     ];
@@ -160,9 +169,9 @@ export class PathTester {
       }
 
       // Get available paths from this node
-      const availablePaths = this.getAvailablePaths(node, current.state);
+      const availableOutlets = this.getAvailableOutlets(node, current.state);
 
-      if (availablePaths.length === 0) {
+      if (availableOutlets.length === 0) {
         errors.push({
           type: 'missing_end',
           message: `Node has no available paths and is not an end node: ${node.id}`,
@@ -172,15 +181,15 @@ export class PathTester {
         continue;
       }
 
-      // Explore each available path
-      for (const path of availablePaths) {
-        const targetNode = this.findNodeById(path.to);
+      // Explore each available outlet
+      for (const outlet of availableOutlets) {
+        const targetNode = this.findNodeById(outlet.to);
         if (!targetNode) {
           errors.push({
             type: 'invalid_transition',
-            message: `Path references non-existent node: ${path.to}`,
+            message: `Outlet references non-existent node: ${outlet.to}`,
             path: current.path,
-            pathId: path.id,
+            pathId: outlet.id,
           });
           continue;
         }
@@ -192,26 +201,26 @@ export class PathTester {
         const newState = actionResult.newState;
 
         // Check for cycles (but allow some repetition for complex flows)
-        const newPath = [...current.path, path.to];
+        const newPath = [...current.path, outlet.to];
         const cycleCount = newPath.filter(
-          (nodeId) => nodeId === path.to
+          (nodeId) => nodeId === outlet.to
         ).length;
 
         if (cycleCount > 3) {
           warnings.push({
             type: 'long_path',
-            message: `Potential infinite loop detected: node ${path.to} visited ${cycleCount} times`,
+            message: `Potential infinite loop detected: node ${outlet.to} visited ${cycleCount} times`,
             path: newPath,
-            nodeId: path.to,
+            nodeId: outlet.to,
           });
           continue;
         }
 
         pathQueue.push({
-          nodeId: path.to,
+          nodeId: outlet.to,
           path: newPath,
           state: newState,
-          choices: [...current.choices, path.label || path.id],
+          choices: [...current.choices, outlet.label || outlet.id],
         });
       }
     }
@@ -251,7 +260,7 @@ export class PathTester {
 
       for (const choice of choices) {
         const result = await engine.next(choice);
-        path.push(result.node.node.id);
+        path.push(result.currentNode.definition.id);
 
         if (result.isComplete) {
           break;
@@ -283,7 +292,7 @@ export class PathTester {
    */
   generateReport(result: PathTestResult): string {
     const lines = [
-      '# ZFlo Path Test Report',
+      '# Flow Path Test Report',
       `**Flow:** ${this.flow.title}`,
       `**Status:** ${result.isValid ? '✅ PASS' : '❌ FAIL'}`,
       '',
@@ -332,22 +341,21 @@ export class PathTester {
     return lines.join('\n');
   }
 
-  private findNodeById(id: string): ZFNode | null {
+  private findNodeById(id: string): NodeDefinition | null {
     return this.flow.nodes.find((node) => node.id === id) || null;
   }
 
-  private getAvailablePaths(
-    node: ZFNode,
+  private getAvailableOutlets(
+    node: NodeDefinition,
     state: Record<string, unknown>
-  ): XFOutlet[] {
+  ): OutletDefinition[] {
     if (!node.outlets) return [];
 
-    return node.outlets.filter((path) => {
-      if (!path.condition) return true;
+    return node.outlets.filter((outlet) => {
+      if (!outlet.condition) return true;
 
       try {
-        // Simple condition evaluation (can be enhanced)
-        return this.evaluateCondition(path.condition, state);
+        return this.evaluateCondition(outlet.condition, state);
       } catch {
         return false;
       }

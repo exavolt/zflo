@@ -80,11 +80,11 @@ export class StateActionExecutor<
         errors,
       };
     } catch (error) {
-      const ZFloError = createStateActionError(
+      const flowError = createStateActionError(
         `${action.type}:${action.target}`,
         error instanceof Error ? error : undefined
       );
-      errors.push(ZFloError.message);
+      errors.push(flowError.message);
 
       return {
         success: false,
@@ -152,13 +152,13 @@ export class StateActionExecutor<
 
       return false;
     } catch (error) {
-      const ZFloError = createConditionEvaluationError(
+      const flowError = createConditionEvaluationError(
         expression,
         error instanceof Error ? error : undefined
       );
 
       if (this.enableLogging) {
-        console.warn('ZFlo Condition Evaluation Error:', ZFloError);
+        console.warn('Flow Condition Evaluation Error:', flowError);
       }
       return false;
     }

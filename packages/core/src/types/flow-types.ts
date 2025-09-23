@@ -3,62 +3,68 @@
 import { JSONSchema7 } from 'json-schema';
 import { ExpressionLanguage } from './expression-types';
 
-export interface XFFlowMetadata<
+// ===== DEFINITION TYPES (Immutable, Serializable) =====
+
+/**
+ * Complete flow definition - immutable blueprint of a flow
+ */
+export interface FlowDefinition<
   TState extends object = Record<string, unknown>,
 > {
   id: string;
   title: string;
   description?: string;
-  /**
-   * Expression language used for all conditions and rules in this flow.
-   * Defaults to 'cel'.
-   */
-  expressionLanguage?: ExpressionLanguage;
-  globalState?: TState;
-  /**
-   * JSON Schema for validating the globalState structure.
-   * When provided, all state changes will be validated against this schema.
-   */
+  version?: string;
+  metadata?: Record<string, unknown>;
+
+  // Flow structure
+  nodes: NodeDefinition[];
+  startNodeId: string;
+
+  // State configuration
+  initialState?: TState;
   stateSchema?: JSONSchema7;
   stateRules?: StateRule[];
-  autoAdvance?: AutoAdvanceMode;
-  metadata?: Record<string, unknown>;
+
+  // Execution configuration
+  expressionLanguage?: ExpressionLanguage;
+  autoAdvanceMode?: AutoAdvanceMode;
 }
 
-export interface ZFFlow<TState extends object = Record<string, unknown>>
-  extends XFFlowMetadata<TState> {
-  nodes: ZFNode[];
-  startNodeId: string;
-}
-
-export type AutoAdvanceMode = 'always' | 'default' | 'never';
-
-export type NodeType = 'start' | 'action' | 'decision' | 'end' | 'isolated';
-
-export interface ZFNode {
+/**
+ * Node definition - immutable blueprint of a node
+ */
+export interface NodeDefinition {
   id: string;
   title: string;
   content?: string;
-  /**
-   * Operations to perform when this node is entered
-   */
-  actions?: StateAction[];
-  outlets?: XFOutlet[];
-  isAutoAdvance?: boolean;
   metadata?: Record<string, unknown>;
+
+  // Behavior definitions
+  actions?: StateAction[];
+  outlets?: OutletDefinition[];
+
+  // Node-specific configuration
+  autoAdvance?: boolean;
 }
 
-export interface XFOutlet {
+/**
+ * Outlet definition - immutable blueprint of a path/edge
+ */
+export interface OutletDefinition {
   id: string;
   to: string;
   label?: string;
   condition?: string;
-  /**
-   * Operations to perform when this outlet is traversed
-   */
   actions?: StateAction[];
   metadata?: Record<string, unknown>;
 }
+
+// ===== CONFIGURATION TYPES =====
+
+export type AutoAdvanceMode = 'always' | 'default' | 'never';
+
+export type NodeType = 'start' | 'action' | 'decision' | 'end' | 'isolated';
 
 export interface StateAction {
   type: 'set';
@@ -67,14 +73,26 @@ export interface StateAction {
   expression?: string;
 }
 
-export interface StateCondition {
-  expression: string;
-  targetEdge?: string;
-}
-
 export interface StateRule {
   condition: string;
   action: 'forceTransition' | 'setState' | 'triggerEvent';
   target?: string;
   value?: unknown;
 }
+
+// ===== LEGACY TYPE ALIASES (for gradual migration) =====
+// TODO: Remove these once all consumers are updated
+
+/** @deprecated Use FlowDefinition instead */
+export type ZFFlow<TState extends object = Record<string, unknown>> =
+  FlowDefinition<TState>;
+
+/** @deprecated Use NodeDefinition instead */
+export type ZFNode = NodeDefinition;
+
+/** @deprecated Use OutletDefinition instead */
+export type XFOutlet = OutletDefinition;
+
+/** @deprecated Use FlowDefinition instead */
+export type XFFlowMetadata<TState extends object = Record<string, unknown>> =
+  Omit<FlowDefinition<TState>, 'nodes' | 'startNodeId'>;

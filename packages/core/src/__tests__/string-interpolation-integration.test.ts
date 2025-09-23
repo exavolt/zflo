@@ -1,14 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { FlowEngine } from '../core/flow-engine';
-import { ZFFlow } from '../types';
+import { FlowDefinition } from '../types/flow-types';
 
 describe('String Interpolation Integration', () => {
-  const testFlow: ZFFlow = {
+  const testFlow: FlowDefinition = {
     id: 'coffee-temp-test',
     title: 'Coffee Temperature Test',
     description: 'Test string interpolation',
     startNodeId: 'welcome',
-    globalState: {
+    initialState: {
       highTemp: 100,
       lowTemp: 80,
       midTemp: 90,
@@ -35,9 +35,10 @@ describe('String Interpolation Integration', () => {
     const engine = new FlowEngine(testFlow);
     const result = await engine.start();
 
-    expect(result.node.node.content).toBe(
-      'Temperature range: 80°C to 100°C. Middle: 90°C'
-    );
+    expect(
+      result.currentNode.interpolatedContent ||
+        result.currentNode.definition.content
+    ).toBe('Temperature range: 80°C to 100°C. Middle: 90°C');
   });
 
   it('should interpolate dynamic expressions', async () => {
@@ -45,19 +46,20 @@ describe('String Interpolation Integration', () => {
     await engine.start();
     const nextResult = await engine.next('welcome-to-brewing');
 
-    expect(nextResult.node.node.content).toBe(
-      'Current temperature is 90°C. Range is 20°C wide.'
-    );
+    expect(
+      nextResult.currentNode.interpolatedContent ||
+        nextResult.currentNode.definition.content
+    ).toBe('Current temperature is 90°C. Range is 20°C wide.');
   });
 
   it('should update interpolations when state changes', async () => {
     // Create a flow with state-dependent content
-    const dynamicFlow: ZFFlow = {
+    const dynamicFlow: FlowDefinition = {
       id: 'dynamic-test',
       title: 'Dynamic Content Test',
       description: 'Test dynamic state updates',
       startNodeId: 'dynamic',
-      globalState: {
+      initialState: {
         temperature: 90,
       },
       nodes: [
@@ -73,20 +75,26 @@ describe('String Interpolation Integration', () => {
     const engine = new FlowEngine(dynamicFlow);
     const initialResult = await engine.start();
 
-    expect(initialResult.node.node.content).toBe('Current temperature: 90°C');
+    expect(
+      initialResult.currentNode.interpolatedContent ||
+        initialResult.currentNode.definition.content
+    ).toBe('Current temperature: 90°C');
 
     // Change the state
     engine.getStateManager().setState({ temperature: 85 });
 
-    // Get the current node again to see updated interpolation
-    const currentNode = engine.getCurrentNode();
+    // Get the current context again to see updated interpolation
+    const currentContext = engine.getCurrentContext();
 
     // The interpolation should reflect the updated state
-    expect(currentNode?.node.content).toBe('Current temperature: 85°C');
+    expect(
+      currentContext?.currentNode.interpolatedContent ||
+        currentContext?.currentNode.definition.content
+    ).toBe('Current temperature: 85°C');
   });
 
   it('should handle missing variables gracefully', async () => {
-    const flowWithMissingVar: ZFFlow = {
+    const flowWithMissingVar: FlowDefinition = {
       id: 'missing-var-test',
       title: 'Test Missing Var',
       description: 'Test missing variable handling',
@@ -99,7 +107,7 @@ describe('String Interpolation Integration', () => {
           outlets: [],
         },
       ],
-      globalState: {
+      initialState: {
         knownVar: 'exists',
       },
     };
@@ -109,11 +117,14 @@ describe('String Interpolation Integration', () => {
 
     // Missing variables should be replaced with empty string
     // Note: CEL evaluator returns undefined for missing variables, which gets converted to empty string
-    expect(result.node.node.content).toBe('Value: , Known: exists');
+    expect(
+      result.currentNode.interpolatedContent ||
+        result.currentNode.definition.content
+    ).toBe('Value: , Known: exists');
   });
 
   it('should handle complex expressions', async () => {
-    const complexFlow: ZFFlow = {
+    const complexFlow: FlowDefinition = {
       id: 'complex-expressions-test',
       title: 'Complex Expressions',
       description: 'Test complex expression interpolation',
@@ -127,7 +138,7 @@ describe('String Interpolation Integration', () => {
           outlets: [],
         },
       ],
-      globalState: {
+      initialState: {
         a: 5,
         b: 3,
         name: 'Hello',
@@ -137,8 +148,9 @@ describe('String Interpolation Integration', () => {
     const engine = new FlowEngine(complexFlow);
     const result = await engine.start();
 
-    expect(result.node.node.content).toBe(
-      'Result: 13, Boolean: true, String: Hello World'
-    );
+    expect(
+      result.currentNode.interpolatedContent ||
+        result.currentNode.definition.content
+    ).toBe('Result: 13, Boolean: true, String: Hello World');
   });
 });

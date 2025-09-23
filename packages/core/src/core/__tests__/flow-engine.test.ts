@@ -1,18 +1,18 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { FlowEngine } from '../flow-engine';
-import { ZFFlow } from '../../types/flow-types';
+import { FlowDefinition } from '../../types/flow-types';
 
 describe('FlowEngine', () => {
-  let simpleFlow: ZFFlow;
-  let decisionFlow: ZFFlow;
-  let stateFlow: ZFFlow;
+  let simpleFlow: FlowDefinition;
+  let decisionFlow: FlowDefinition;
+  let stateFlow: FlowDefinition;
 
   beforeEach(() => {
     simpleFlow = {
       id: 'simple-test',
       title: 'Simple Test Flow',
       startNodeId: 'start',
-      globalState: {},
+      initialState: {},
       nodes: [
         {
           id: 'start',
@@ -33,7 +33,7 @@ describe('FlowEngine', () => {
       id: 'decision-test',
       title: 'Decision Test Flow',
       startNodeId: 'start',
-      globalState: {},
+      initialState: {},
       nodes: [
         {
           id: 'start',
@@ -68,7 +68,7 @@ describe('FlowEngine', () => {
       id: 'state-test',
       title: 'State Test Flow',
       startNodeId: 'start',
-      globalState: { score: 0, hasKey: false },
+      initialState: { score: 0, hasKey: false },
       nodes: [
         {
           id: 'start',
@@ -100,10 +100,10 @@ describe('FlowEngine', () => {
       const engine = new FlowEngine(simpleFlow);
       const result = await engine.start();
 
-      expect(result.node.node.id).toBe('start');
-      expect(result.node.type).toBe('start');
-      expect(result.choices).toHaveLength(1);
-      expect(result.choices[0].label).toBe('Continue');
+      expect(result.currentNode.definition.id).toBe('start');
+      expect(result.currentNode.type).toBe('start');
+      expect(result.availableChoices).toHaveLength(1);
+      expect(result.availableChoices[0].label).toBe('Continue');
       expect(result.isComplete).toBe(false);
     });
 
@@ -112,39 +112,39 @@ describe('FlowEngine', () => {
       const startResult = await engine.start();
 
       // Get the choice ID from the start result
-      const choiceId = startResult.choices[0].id;
+      const choiceId = startResult.availableChoices[0].outletId;
       const result = await engine.next(choiceId);
 
-      expect(result.node.node.id).toBe('end');
-      expect(result.node.type).toBe('end');
-      expect(result.choices).toHaveLength(0);
+      expect(result.currentNode.definition.id).toBe('end');
+      expect(result.currentNode.type).toBe('end');
+      expect(result.availableChoices).toHaveLength(0);
       expect(result.isComplete).toBe(true);
     });
 
     it('should handle decision nodes', async () => {
       const engine = new FlowEngine(decisionFlow);
       const startResult = await engine.start();
-      const choiceId = startResult.choices[0].id;
+      const choiceId = startResult.availableChoices[0].outletId;
       const result = await engine.next(choiceId);
 
-      expect(result.node.node.id).toBe('decision');
-      expect(result.node.type).toBe('decision');
-      expect(result.choices).toHaveLength(2);
-      expect(result.choices[0].label).toBe('Go Left');
-      expect(result.choices[1].label).toBe('Go Right');
+      expect(result.currentNode.definition.id).toBe('decision');
+      expect(result.currentNode.type).toBe('decision');
+      expect(result.availableChoices).toHaveLength(2);
+      expect(result.availableChoices[0].label).toBe('Go Left');
+      expect(result.availableChoices[1].label).toBe('Go Right');
       expect(result.isComplete).toBe(false);
     });
 
     it('should handle user choices', async () => {
       const engine = new FlowEngine(decisionFlow);
       const startResult = await engine.start();
-      const startChoiceId = startResult.choices[0].id;
+      const startChoiceId = startResult.availableChoices[0].outletId;
       await engine.next(startChoiceId); // Move to decision
 
       const result = await engine.next('left');
 
-      expect(result.node.node.id).toBe('left-end');
-      expect(result.node.node.title).toBe('Left Path');
+      expect(result.currentNode.definition.id).toBe('left-end');
+      expect(result.currentNode.definition.title).toBe('Left Path');
       expect(result.isComplete).toBe(true);
     });
   });
@@ -153,7 +153,7 @@ describe('FlowEngine', () => {
     it('should execute node actions', async () => {
       const engine = new FlowEngine(stateFlow);
       const startResult = await engine.start();
-      const choiceId = startResult.choices[0].id;
+      const choiceId = startResult.availableChoices[0].outletId;
       await engine.next(choiceId); // Move to action node
 
       const state = engine.getState();
@@ -169,7 +169,7 @@ describe('FlowEngine', () => {
       expect(state.hasKey).toBe(false);
       expect(state.score).toBe(0);
 
-      const firstChoiceId = startResult.choices[0].id;
+      const firstChoiceId = startResult.availableChoices[0].outletId;
       await engine.next(firstChoiceId); // Move to action node
 
       // Explicitly advance from action node to next when single path exists
@@ -180,7 +180,7 @@ describe('FlowEngine', () => {
       expect(state.score).toBe(1);
 
       // Should be at end node now after explicit advance
-      expect(engine.getCurrentNode()?.node.id).toBe('end');
+      expect(engine.getCurrentContext()?.currentNode.definition.id).toBe('end');
     });
   });
 
@@ -188,31 +188,31 @@ describe('FlowEngine', () => {
     it('should track history by default', async () => {
       const engine = new FlowEngine(simpleFlow);
       const startResult = await engine.start();
-      const choiceId = startResult.choices[0].id;
+      const choiceId = startResult.availableChoices[0].outletId;
       await engine.next(choiceId);
 
       const history = engine.getHistory();
       expect(history).toHaveLength(2);
-      expect(history[0].node.node.id).toBe('start');
-      expect(history[1].node.node.id).toBe('end');
+      expect(history[0].nodeId).toBe('start');
+      expect(history[1].nodeId).toBe('end');
     });
 
     it('should support going back', async () => {
       const engine = new FlowEngine(simpleFlow);
       const startResult = await engine.start();
-      const choiceId = startResult.choices[0].id;
+      const choiceId = startResult.availableChoices[0].outletId;
       await engine.next(choiceId);
 
       expect(engine.canGoBack()).toBe(true);
 
       const result = await engine.goBack();
-      expect(result.node.node.id).toBe('start');
+      expect(result.currentNode.definition.id).toBe('start');
     });
 
     it('should disable history when configured', async () => {
       const engine = new FlowEngine(simpleFlow, { enableHistory: false });
       const startResult = await engine.start();
-      const choiceId = startResult.choices[0].id;
+      const choiceId = startResult.availableChoices[0].outletId;
       await engine.next(choiceId);
 
       expect(engine.canGoBack()).toBe(false);
@@ -233,7 +233,7 @@ describe('FlowEngine', () => {
     it('should throw error for invalid choice', async () => {
       const engine = new FlowEngine(decisionFlow);
       const startResult = await engine.start();
-      const choiceId = startResult.choices[0].id;
+      const choiceId = startResult.availableChoices[0].outletId;
       await engine.next(choiceId); // Move to decision
 
       await expect(engine.next('invalid-choice')).rejects.toThrow(
@@ -254,12 +254,12 @@ describe('FlowEngine', () => {
     it('should respect maxHistorySize option', async () => {
       const engine = new FlowEngine(simpleFlow, { maxHistorySize: 1 });
       const startResult = await engine.start();
-      const choiceId = startResult.choices[0].id;
+      const choiceId = startResult.availableChoices[0].outletId;
       await engine.next(choiceId);
 
       const history = engine.getHistory();
       expect(history).toHaveLength(1);
-      expect(history[0].node.node.id).toBe('end'); // Only keeps the latest
+      expect(history[0].nodeId).toBe('end'); // Only keeps the latest
     });
 
     it('should handle initial state option', async () => {
@@ -278,18 +278,18 @@ describe('FlowEngine', () => {
     it('should reset engine state', async () => {
       const engine = new FlowEngine(stateFlow);
       const startResult = await engine.start();
-      const firstChoiceId = startResult.choices[0].id;
+      const firstChoiceId = startResult.availableChoices[0].outletId;
       await engine.next(firstChoiceId); // Move to action node
 
       // Explicitly advance from action node to next when single path exists
       await engine.next();
 
       expect(engine.getState().hasKey).toBe(true);
-      expect(engine.getCurrentNode()?.node.id).toBe('end');
+      expect(engine.getCurrentContext()?.currentNode.definition.id).toBe('end');
 
       engine.reset();
 
-      expect(engine.getCurrentNode()).toBe(null);
+      expect(engine.getCurrentContext()).toBe(null);
       expect(engine.getState().hasKey).toBe(false);
       expect(engine.getHistory()).toHaveLength(0);
     });
@@ -297,11 +297,11 @@ describe('FlowEngine', () => {
 
   describe('Conditional outlets', () => {
     it('should evaluate path conditions', async () => {
-      const conditionalFlow: ZFFlow = {
+      const conditionalFlow: FlowDefinition = {
         id: 'conditional-test',
         title: 'Conditional Test',
         startNodeId: 'start',
-        globalState: { hasKey: false },
+        initialState: { hasKey: false },
         nodes: [
           {
             id: 'start',
@@ -312,7 +312,7 @@ describe('FlowEngine', () => {
             id: 'door',
             title: 'Locked Door',
             content: 'You see a locked door',
-            isAutoAdvance: false, // Prevent auto-advance to ensure we stay at decision node
+            autoAdvance: false, // Prevent auto-advance to ensure we stay at decision node
             outlets: [
               {
                 id: 'open-door',
@@ -340,26 +340,24 @@ describe('FlowEngine', () => {
 
       const engine = new FlowEngine(conditionalFlow);
       const startResult = await engine.start();
-      const choiceId = startResult.choices[0].id;
-      await engine.next(choiceId); // Move to door
+      const choiceId = startResult.availableChoices[0].outletId;
+      const result = await engine.next(choiceId); // Move to door
 
-      const currentNode = engine.getCurrentNode();
-      expect(currentNode?.node.id).toBe('door');
+      expect(result.currentNode.definition.id).toBe('door');
 
-      const choices = engine.getAvailableChoices();
       // Should only show the "Try anyway" option since hasKey is false
-      expect(choices).toHaveLength(1);
-      expect(choices[0].label).toBe('Try anyway');
+      expect(result.availableChoices).toHaveLength(1);
+      expect(result.availableChoices[0].label).toBe('Try anyway');
     });
   });
 
   describe('Path Actions', () => {
     it('should execute path actions when transitioning via specific path', async () => {
-      const pathActionsFlow: ZFFlow = {
+      const pathActionsFlow: FlowDefinition = {
         id: 'path-actions-test',
         title: 'Path Actions Test',
         startNodeId: 'start',
-        globalState: { score: 0, coins: 0 },
+        initialState: { score: 0, coins: 0 },
         nodes: [
           {
             id: 'start',
@@ -401,7 +399,7 @@ describe('FlowEngine', () => {
 
       const engine = new FlowEngine(pathActionsFlow);
       const startResult = await engine.start();
-      const choiceId = startResult.choices[0].id;
+      const choiceId = startResult.availableChoices[0].outletId;
       await engine.next(choiceId); // Move to choice
 
       // Take the treasure path
@@ -410,15 +408,15 @@ describe('FlowEngine', () => {
       const state = engine.getState();
       expect(state.score).toBe(100); // Set by path action
       expect(state.coins).toBe(1); // Incremented by path action
-      expect(engine.getCurrentNode()?.node.id).toBe('end');
+      expect(engine.getCurrentContext()?.currentNode.definition.id).toBe('end');
     });
 
     it('should execute different path actions based on choice', async () => {
-      const pathActionsFlow: ZFFlow = {
+      const pathActionsFlow: FlowDefinition = {
         id: 'path-actions-test-2',
         title: 'Path Actions Test 2',
         startNodeId: 'start',
-        globalState: { score: 10, health: 100 },
+        initialState: { score: 10, health: 100 },
         nodes: [
           {
             id: 'start',
@@ -461,7 +459,7 @@ describe('FlowEngine', () => {
 
       const engine = new FlowEngine(pathActionsFlow);
       const startResult = await engine.start();
-      const choiceId = startResult.choices[0].id;
+      const choiceId = startResult.availableChoices[0].outletId;
       await engine.next(choiceId); // Move to choice
 
       // Take the fight path
@@ -470,15 +468,15 @@ describe('FlowEngine', () => {
       const state = engine.getState();
       expect(state.health).toBe(99); // Decremented by path action
       expect(state.score).toBe(50); // Set by path action
-      expect(engine.getCurrentNode()?.node.id).toBe('end');
+      expect(engine.getCurrentContext()?.currentNode.definition.id).toBe('end');
     });
 
     it('should execute both path actions and node actions in correct order', async () => {
-      const combinedActionsFlow: ZFFlow = {
+      const combinedActionsFlow: FlowDefinition = {
         id: 'combined-actions-test',
         title: 'Combined Actions Test',
         startNodeId: 'start',
-        globalState: { value: 0 },
+        initialState: { value: 0 },
         nodes: [
           {
             id: 'start',
@@ -513,7 +511,7 @@ describe('FlowEngine', () => {
 
       const engine = new FlowEngine(combinedActionsFlow);
       const startResult = await engine.start();
-      const choiceId = startResult.choices[0].id;
+      const choiceId = startResult.availableChoices[0].outletId;
       await engine.next(choiceId); // Move to action node (path actions execute first)
 
       const state = engine.getState();
@@ -521,11 +519,11 @@ describe('FlowEngine', () => {
     });
 
     it('should handle outlets without actions', async () => {
-      const mixedOutletsFlow: ZFFlow = {
+      const mixedOutletsFlow: FlowDefinition = {
         id: 'mixed-outlets-test',
         title: 'Mixed Outlets Test',
         startNodeId: 'start',
-        globalState: { counter: 0 },
+        initialState: { counter: 0 },
         nodes: [
           {
             id: 'start',
@@ -564,7 +562,7 @@ describe('FlowEngine', () => {
 
       const engine = new FlowEngine(mixedOutletsFlow);
       const startResult = await engine.start();
-      const choiceId = startResult.choices[0].id;
+      const choiceId = startResult.availableChoices[0].outletId;
       await engine.next(choiceId); // Move to choice
 
       // Take path without actions
@@ -572,15 +570,15 @@ describe('FlowEngine', () => {
 
       const state = engine.getState();
       expect(state.counter).toBe(0); // Should remain unchanged
-      expect(engine.getCurrentNode()?.node.id).toBe('end');
+      expect(engine.getCurrentContext()?.currentNode.definition.id).toBe('end');
     });
 
     it('should handle expression-based path actions', async () => {
-      const expressionPathFlow: ZFFlow = {
+      const expressionPathFlow: FlowDefinition = {
         id: 'expression-path-test',
         title: 'Expression Path Test',
         startNodeId: 'start',
-        globalState: { base: 5, multiplier: 3 },
+        initialState: { base: 5, multiplier: 3 },
         nodes: [
           {
             id: 'start',
@@ -610,12 +608,12 @@ describe('FlowEngine', () => {
 
       const engine = new FlowEngine(expressionPathFlow);
       const startResult = await engine.start();
-      const choiceId = startResult.choices[0].id;
+      const choiceId = startResult.availableChoices[0].outletId;
       await engine.next(choiceId);
 
       const state = engine.getState();
       expect(state.result).toBe(15); // 5 * 3 = 15
-      expect(engine.getCurrentNode()?.node.id).toBe('end');
+      expect(engine.getCurrentContext()?.currentNode.definition.id).toBe('end');
     });
   });
 });

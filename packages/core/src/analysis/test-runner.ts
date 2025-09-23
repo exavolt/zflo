@@ -2,14 +2,14 @@
 
 import { PathTester, PathTestResult } from './path-tester';
 import { FlowValidator } from './flow-validator';
-import { ZFFlow } from '../types/flow-types';
+import { FlowDefinition } from '../types/flow-types';
 import { ValidationResult } from '../types/analysis-types';
 
 /**
- * Simple test runner utility for ZFlo flows
+ * Simple test runner utility for flows
  */
 export async function runPathTests(
-  flow: ZFFlow,
+  flow: FlowDefinition,
   options: {
     maxSteps?: number;
     maxPaths?: number;
@@ -104,7 +104,7 @@ export async function runPathTests(
 /**
  * Quick validation function for a single flow
  */
-export function validateFlow(flow: ZFFlow): ValidationResult {
+export function validateFlow(flow: FlowDefinition): ValidationResult {
   const validator = new FlowValidator();
   return validator.validate(flow);
 }

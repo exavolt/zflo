@@ -1,5 +1,5 @@
 /**
- * Content interpolation utilities for ZFlo
+ * Content interpolation utilities
  * Supports ${expression} syntax for dynamic content
  */
 
@@ -50,7 +50,7 @@ export class ContentInterpolator {
     let hasInterpolations = false;
 
     // First, handle escaped interpolations by temporarily replacing them
-    const escapedPlaceholder = '___ZFLO_ESCAPED_INTERPOLATION___';
+    const escapedPlaceholder = '___FLOW_ESCAPED_INTERPOLATION___';
     let escapedInterpolations: string[] = [];
 
     // Replace escaped ${...} with placeholders
@@ -79,7 +79,7 @@ export class ContentInterpolator {
             errors.push(errorMsg);
 
             if (this.enableLogging) {
-              console.warn('ZFlo Content Interpolation Warning:', errorMsg);
+              console.warn('Flow Content Interpolation Warning:', errorMsg);
             }
 
             return '';
@@ -94,7 +94,7 @@ export class ContentInterpolator {
           errors.push(errorMsg);
 
           if (this.enableLogging) {
-            console.warn('ZFlo Content Interpolation Error:', errorMsg);
+            console.warn('Flow Content Interpolation Error:', errorMsg);
           }
 
           // Return empty string for missing variables, original placeholder for syntax errors
