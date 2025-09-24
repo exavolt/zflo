@@ -34,7 +34,7 @@ This flow guides an agent in creating a new React component using concrete tool 
   "id": "create-react-component",
   "title": "Create React Component Workflow",
   "startNodeId": "ask-component-name",
-  "globalState": {
+  "initialState": {
     "componentName": "MyNewComponent",
     "filePath": null,
     "boilerplate": "import React from 'react';\n\nexport const ${componentName} = () => {\n  return <div>${componentName}</div>;\n};\n"

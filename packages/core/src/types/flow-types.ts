@@ -18,7 +18,10 @@ export interface FlowStateConfiguration<
 > {
   initialState?: TState;
   stateSchema?: JSONSchema7;
-  stateRules?: StateRule[];
+  /**
+   * Rules to be evaluated after a state change
+   */
+  afterStateChangeRules?: StateRule[];
 }
 
 export interface FlowExecutionConfiguration {

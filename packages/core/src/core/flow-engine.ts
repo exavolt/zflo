@@ -54,7 +54,7 @@ export class FlowEngine<
     } else {
       this.stateManager = new StateManager<TState>(
         this.runtimeFlow.state,
-        flowDefinition.stateRules || [],
+        flowDefinition.afterStateChangeRules || [],
         {
           expressionLanguage: flowDefinition.expressionLanguage ?? 'cel',
           stateSchema: flowDefinition.stateSchema,

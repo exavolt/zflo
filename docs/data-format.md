@@ -12,9 +12,9 @@ interface FlowDefinition {
   title: string;
   description?: string;
   expressionLanguage?: 'cel';
-  globalState?: Record<string, unknown>;
+  initialState?: Record<string, unknown>;
   stateSchema?: JSONSchema7; // optional JSON Schema validation
-  stateRules?: StateRule[]; // optional rule engine
+  afterStateChangeRules?: StateRule[]; // optional rule engine
   autoAdvance?: 'always' | 'default' | 'never';
   metadata?: Record<string, unknown>;
   nodes: NodeDefinition[];
@@ -203,13 +203,13 @@ The format supports advanced expert system features:
 
 ```json
 {
-  "globalState": {
+  "initialState": {
     "inventory": [],
     "health": 100,
     "location": "start",
     "flags": {}
   },
-  "stateRules": [
+  "afterStateChangeRules": [
     {
       "condition": "health <= 0",
       "action": "forceTransition",

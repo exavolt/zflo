@@ -20,7 +20,7 @@ export function useFlowState(initialFlow?: FlowDefinition) {
     title: initialFlow?.title || 'New Flow',
     description: initialFlow?.description,
     initialState: initialFlow?.initialState || {},
-    stateRules: initialFlow?.stateRules || [],
+    afterStateChangeRules: initialFlow?.afterStateChangeRules || [],
     autoAdvanceMode: initialFlow?.autoAdvanceMode || 'default',
     expressionLanguage: initialFlow?.expressionLanguage || 'cel',
   });
@@ -161,7 +161,7 @@ export function useFlowState(initialFlow?: FlowDefinition) {
         title: flow.title,
         description: flow.description,
         initialState: flow.initialState,
-        stateRules: flow.stateRules,
+        afterStateChangeRules: flow.afterStateChangeRules,
         autoAdvanceMode: flow.autoAdvanceMode,
         expressionLanguage: flow.expressionLanguage,
       });

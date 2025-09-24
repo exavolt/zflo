@@ -73,7 +73,7 @@ export function convertReactFlowToZFlo(
     nodes: zfloNodes,
     startNodeId: startNode?.id || zfloNodes[0]?.id || '',
     initialState: flowMetadata.initialState,
-    stateRules: flowMetadata.stateRules,
+    afterStateChangeRules: flowMetadata.afterStateChangeRules,
     autoAdvanceMode: flowMetadata.autoAdvanceMode,
     expressionLanguage: flowMetadata.expressionLanguage,
     metadata: flowMetadata.metadata,

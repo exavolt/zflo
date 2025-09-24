@@ -135,7 +135,7 @@ export interface FlowDefinition {
   expressionLanguage?: 'cel';
   globalState?: Record<string, unknown>;
   stateSchema?: JSONSchema7; // optional JSON Schema validation
-  stateRules?: StateRule[]; // optional rule engine
+  afterStateChangeRules?: StateRule[]; // optional rule engine
   autoAdvance?: 'always' | 'default' | 'never';
   metadata?: Record<string, unknown>;
   nodes: NodeDefinition[];

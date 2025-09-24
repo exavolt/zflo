@@ -334,7 +334,7 @@
     }
   ],
   "startNodeId": "node-1",
-  "globalState": {
+  "initialState": {
     "lowTemp": 80,
     "midTemp": 90,
     "highTemp": 100,

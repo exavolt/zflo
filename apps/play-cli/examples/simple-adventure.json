@@ -4,7 +4,7 @@
   "description": "A simple text adventure to test the CLI player",
   "expressionLanguage": "cel",
   "startNodeId": "start",
-  "globalState": {
+  "initialState": {
     "playerName": "Hero",
     "health": 100,
     "hasKey": false

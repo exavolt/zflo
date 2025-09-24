@@ -189,7 +189,7 @@ const pizzaOrderFlow = {
       outlets: [],
     },
   ],
-  globalState: {
+  initialState: {
     customerName: '',
     pizzaSize: '',
     toppings: '',

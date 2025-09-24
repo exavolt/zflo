@@ -610,7 +610,7 @@ export function FlowEditor() {
             expressionLanguage: flowMetadata.expressionLanguage,
             initialState: flowMetadata.initialState,
             stateSchema: flowMetadata.stateSchema,
-            stateRules: flowMetadata.stateRules,
+            afterStateChangeRules: flowMetadata.afterStateChangeRules,
             autoAdvanceMode: flowMetadata.autoAdvanceMode,
             metadata: flowMetadata.metadata,
           },
@@ -646,7 +646,7 @@ export function FlowEditor() {
                 title: userFlow.title,
                 description: '',
                 expressionLanguage: 'cel',
-                globalState: {},
+                initialState: {},
                 stateSchema: undefined,
                 metadata: userFlow.metadata || {},
               }
