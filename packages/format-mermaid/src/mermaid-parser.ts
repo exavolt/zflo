@@ -1,6 +1,5 @@
 import { FlowDefinition, NodeDefinition } from '@zflo/core';
-import { FlowValidator } from '@zflo/core';
-import type { FormatParser, FormatValidationResult } from '@zflo/api-format';
+import type { FormatParser } from '@zflo/api-format';
 
 interface MermaidNode {
   id: string;
@@ -37,8 +36,6 @@ interface MermaidAST {
  * by parsing the structure systematically rather than using fragile regex patterns
  */
 export class MermaidParser implements FormatParser {
-  private validator = new FlowValidator();
-
   parse(mermaidCode: string): FlowDefinition {
     try {
       // Parse YAML front-matter if present
@@ -57,24 +54,6 @@ export class MermaidParser implements FormatParser {
       throw new Error(
         `Failed to parse Mermaid flowchart: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
-    }
-  }
-
-  validate(mermaidCode: string): FormatValidationResult {
-    try {
-      const flowchart = this.parse(mermaidCode);
-      const result = this.validator.validate(flowchart);
-      return {
-        isValid: result.isValid,
-        errors: result.errors.map((e) => e.message),
-        warnings: result.warnings.map((w) => w.message),
-      };
-    } catch (error) {
-      return {
-        isValid: false,
-        errors: [error instanceof Error ? error.message : 'Unknown error'],
-        warnings: [],
-      };
     }
   }
 

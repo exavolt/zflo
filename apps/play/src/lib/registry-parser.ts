@@ -41,7 +41,7 @@ export class RegistryParser {
         const detection = this.registry.detectFormat(code);
         return {
           success: true,
-          flow: result.flowchart,
+          flow: result.flow,
           format: detection.format,
           confidence: detection.confidence,
         };

@@ -7,73 +7,76 @@
 The main flow execution engine for ZFlo.
 
 ```typescript
-class FlowEngine {
-  constructor(flowchart: FlowDefinition, options?: EngineOptions);
+class FlowEngine<TState extends object> {
+  constructor(
+    flowDefinition: FlowDefinition<TState>,
+    options?: EngineOptions<TState>
+  );
 
   // Execution control
-  start(): Promise<ExecutionResult>;
-  next(choice?: string): Promise<ExecutionResult>;
-  reset(): void;
-  goBack(): Promise<ExecutionResult | null>;
+  start(): Promise<ExecutionContext<TState>>;
+  next(choiceId?: string): Promise<ExecutionContext<TState>>;
+  reset(): Promise<void>;
+  goBack(): Promise<ExecutionContext<TState>>;
 
   // State access
-  getCurrentNode(): NodeDefinition | null;
-  getHistory(): ExecutionStep[];
-  getAvailableChoices(): Choice[];
-  getState(): Record<string, any>;
+  getCurrentContext(): Promise<ExecutionContext<TState> | null>;
+  getState(): TState;
+  setState(newState: Partial<TState>): Promise<void>;
+  getHistory(): ExecutionStep<TState>[];
   isComplete(): boolean;
   canGoBack(): boolean;
 
   // Event handling
-  on(event: EngineEvent, handler: EventHandler): void;
-  off(event: EngineEvent, handler: EventHandler): void;
+  on<K extends keyof EngineEventData<TState>>(
+    event: K,
+    listener: (payload: EngineEventData<TState>[K]) => void
+  ): this;
+  off<K extends keyof EngineEventData<TState>>(
+    event: K,
+    listener: (payload: EngineEventData<TState>[K]) => void
+  ): this;
 }
 ```
 
 ### Types
 
 ```typescript
-interface ExecutionResult {
-  node: AnnotatedNode;
-  choices: Choice[];
-  state: Record<string, any>;
-  isComplete: boolean;
+interface ExecutionContext<TState extends object> {
+  flow: RuntimeFlow<TState>;
+  currentNode: RuntimeNode;
+  availableChoices: RuntimeChoice[];
   canGoBack: boolean;
+  isComplete: boolean;
 }
 
-interface Choice {
-  id: string;
+interface RuntimeChoice {
+  outletId: string;
   label: string;
   description?: string;
+  isEnabled: boolean;
 }
 
-interface ExecutionStep {
-  node: NodeDefinition;
-  choice?: string;
+interface ExecutionStep<TState extends object> {
+  nodeId: string;
+  choiceId?: string;
   timestamp: Date;
+  state: TState;
 }
-
-type EngineEvent =
-  | 'nodeEnter'
-  | 'nodeExit'
-  | 'stateChange'
-  | 'autoAdvance'
-  | 'complete'
-  | 'error';
 ```
 
 ## Expression Language
 
-- **Default**: CEL (Common Expression Language) is used for all conditions and rules.
+- **Default**: Liquid is the default templating and expression language.
 
 Examples:
 
-```text
-"sword" in inventory && health > 50
-"key" in inventory
+```liquid
+{{ user.name | capitalize }}
+{% if score > 50 %}You win!{% endif %}
 ```
 
-FlowEngine initialization respects `flowchart.expressionLanguage`:
+FlowEngine initialization respects `flowDefinition.expressionLanguage`:
 
 ```ts
 import { FlowEngine } from '@zflo/core';
@@ -83,71 +86,60 @@ const engine = new FlowEngine({
   title: 'Demo',
   startNodeId: 'start',
   nodes: [],
-  expressionLanguage: 'cel', // default if omitted
+  expressionLanguage: 'liquid', // default if omitted
 });
 ```
 
-### Expression Evaluators
+### ExpressionEngine
 
-ZFlo uses stateless evaluators behind the scenes. The common interface is:
+ZFlo uses a pluggable expression engine. The common interface is:
 
 ```ts
-export interface ExpressionEvaluator {
-  evaluate(
+export interface ExpressionEngine {
+  evaluateCondition(
     expression: string,
-    context: Record<string, any>,
-    options?: { onError?: (error: Error) => void }
-  ): boolean;
-  clearCache?(): void;
+    context: Record<string, unknown>
+  ): Promise<boolean>;
+  evaluateExpression(
+    expression: string,
+    context: Record<string, unknown>
+  ): Promise<any>;
+  interpolate(
+    template: string,
+    context: Record<string, unknown>
+  ): Promise<string>;
 }
 ```
 
-- CelEvaluator (default): Evaluates CEL expressions. Compiled parses are cached per expression for performance. Non-boolean results are coerced to boolean.
-
-```text
-"sword" in inventory
-```
-
-Minimal usage via StateManager:
-
-```ts
-import { StateManager } from '@zflo/core';
-
-const manager = new StateManager({}, [], { expressionLanguage: 'cel' });
-manager.evaluateCondition('"sword" in inventory');
-```
+- **LiquidExpressionEngine** (default): Evaluates Liquid expressions.
+- **CelExpressionEngine**: Evaluates CEL expressions.
 
 ### StateManager
 
 The `StateManager` owns execution state, evaluates expressions, applies actions, and emits state changes.
 
 ```ts
-class StateManager {
+class StateManager<TState extends object> {
   constructor(
-    initialState?: Record<string, any>,
+    initialState: TState,
     rules?: StateRule[],
-    options?: { expressionLanguage?: 'cel' }
+    options?: StateManagerOptions
   );
 
   // State access/manipulation
-  getState(): Record<string, any>;
-  setState(newState: Record<string, any>): void;
-  executeActions(actions: StateAction[]): void;
-  reset(newState?: Record<string, any>): void;
+  getState(): TState;
+  setState(newState: Partial<TState>): Promise<void>;
+  executeActions(actions: StateAction[]): Promise<void>;
+  reset(newState?: Partial<TState>): Promise<void>;
 
   // Expression evaluation
-  evaluateCondition(expression: string): boolean;
+  evaluateCondition(expression: string): Promise<boolean>;
 
   // Events
-  on(event: 'stateChange' | 'error', handler: (data: any) => void): void;
-  off(event: 'stateChange' | 'error', handler: (data: any) => void): void;
+  on(event: 'stateChange' | 'error', handler: (data: any) => void): this;
+  off(event: 'stateChange' | 'error', handler: (data: any) => void): this;
 }
 ```
-
-Notes:
-
-- Default language is CEL; configure per flow in `flowchart.expressionLanguage` or per expression via prefixes.
-- Evaluators are stateless; `StateManager` passes the current state as context on each evaluation.
 
 ### Format Parsers
 
@@ -171,9 +163,9 @@ Main component for rendering interactive flowcharts.
 
 ```typescript
 interface FlowPlayerProps {
-  flowchart: FlowDefinition;
+  flowDefinition: FlowDefinition;
   onComplete?: (history: ExecutionStep[]) => void;
-  onNodeChange?: (node: NodeDefinition) => void;
+  onNodeChange?: (node: RuntimeNode) => void;
   theme?: Theme;
   className?: string;
 }
@@ -187,8 +179,8 @@ Customizable node display component.
 
 ```typescript
 interface NodeRendererProps {
-  node: NodeDefinition;
-  choices: Choice[];
+  node: RuntimeNode;
+  choices: RuntimeChoice[];
   onChoice: (choiceId: string) => void;
   canGoBack: boolean;
   onGoBack: () => void;
@@ -201,20 +193,11 @@ export const NodeRenderer: React.FC<NodeRendererProps>;
 
 ```typescript
 // Core execution hook
-function useFlowchartEngine(flowchart: FlowDefinition): {
-  currentNode: NodeDefinition | null;
-  choices: Choice[];
-  isComplete: boolean;
-  makeChoice: (choiceId: string) => void;
-  goBack: () => void;
-  reset: () => void;
-};
-
-// History management
-function useExecutionHistory(): {
-  history: ExecutionStep[];
-  canGoBack: boolean;
-  goToStep: (stepIndex: number) => void;
+function useFlowEngine(flowDefinition: FlowDefinition): {
+  context: ExecutionContext | null;
+  makeChoice: (choiceId: string) => Promise<void>;
+  goBack: () => Promise<void>;
+  reset: () => Promise<void>;
 };
 ```
 
@@ -233,16 +216,16 @@ flowchart TD
 `;
 
 const parser = new MermaidParser();
-const flowchart = parser.parse(mermaidCode);
-const engine = new FlowEngine(flowchart);
+const flowDefinition = parser.parse(mermaidCode);
+const engine = new FlowEngine(flowDefinition);
 
 // Start execution
-const result = await engine.start();
-console.log(result.node.title); // "Start"
+const context = await engine.start();
+console.log(context.currentNode.definition.title); // "Start"
 
 // Make a choice
-const nextResult = await engine.next('yes');
-console.log(nextResult.node.title); // "Success"
+const nextContext = await engine.next('yes');
+console.log(nextContext.currentNode.definition.title); // "Success"
 ```
 
 ### React Integration
@@ -253,7 +236,7 @@ import { FlowPlayer } from '@zflo/react';
 function App() {
   return (
     <FlowPlayer
-      flowchart={flowchart}
+      flowDefinition={flowDefinition}
       onComplete={(history) => {
         console.log('Adventure completed!', history);
       }}

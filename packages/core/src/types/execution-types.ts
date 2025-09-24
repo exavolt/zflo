@@ -157,22 +157,22 @@ export interface IStateManager<
   /**
    * Update the state with new values
    */
-  setState(newState: Partial<TState>): void;
+  setState(newState: Partial<TState>): Promise<void>;
 
   /**
    * Execute state actions
    */
-  executeActions(actions: StateAction[]): void;
+  executeActions(actions: StateAction[]): Promise<void>;
 
   /**
    * Evaluate a condition expression against the current state
    */
-  evaluateCondition(expression: string): boolean;
+  evaluateCondition(expression: string): Promise<boolean>;
 
   /**
    * Reset the state to a new initial state
    */
-  reset(newState?: Partial<TState>): void;
+  reset(newState?: Partial<TState>): Promise<void>;
 
   /**
    * Event emitter methods for state change notifications

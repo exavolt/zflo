@@ -2,7 +2,7 @@
 
 ## ZFlo Internal Format
 
-The core engine uses a normalized JSON format that represents flowcharts as directed graphs.
+The core data structure in ZFlo is the `FlowDefinition` object. It's a JSON object that defines the entire structure, state, and behavior of a flow.
 
 ### Schema
 
@@ -11,11 +11,11 @@ interface FlowDefinition {
   id: string;
   title: string;
   description?: string;
-  expressionLanguage?: 'cel';
+  expressionLanguage?: 'liquid' | 'cel';
   initialState?: Record<string, unknown>;
   stateSchema?: JSONSchema7; // optional JSON Schema validation
   afterStateChangeRules?: StateRule[]; // optional rule engine
-  autoAdvance?: 'always' | 'default' | 'never';
+  autoAdvanceMode?: 'always' | 'default' | 'never';
   metadata?: Record<string, unknown>;
   nodes: NodeDefinition[];
   startNodeId: string;
@@ -24,10 +24,10 @@ interface FlowDefinition {
 interface NodeDefinition {
   id: string;
   title: string;
-  content?: string; // supports ${...} interpolation
-  actions?: StateAction[]; // executed on node enter
+  content?: string; // supports {{...}} interpolation using Liquid syntax
+  actions?: StateAction[];
   outlets?: OutletDefinition[]; // edges
-  autoAdvance?: 'always' | 'default' | 'never';
+  autoAdvance?: boolean;
   metadata?: Record<string, unknown>;
 }
 
@@ -52,7 +52,7 @@ interface StateCondition {
   "id": "start",
   "type": "start",
   "title": "Begin Adventure",
-  "content": "Welcome to your adventure!"
+  "content": "Your health is {{ health }} and you have {{ inventory.size }} items."
 }
 ```
 
@@ -207,7 +207,7 @@ The format supports advanced expert system features:
     "inventory": [],
     "health": 100,
     "location": "start",
-    "flags": {}
+    "hasKey": false
   },
   "afterStateChangeRules": [
     {

@@ -521,6 +521,9 @@ importers:
       eventemitter3:
         specifier: ^5.0.1
         version: 5.0.1
+      liquidjs:
+        specifier: ^10.15.1
+        version: 10.21.1
     devDependencies:
       '@types/json-schema':
         specifier: ^7.0.15
@@ -4385,6 +4388,13 @@ packages:
       }
     engines: { node: '>= 0.8' }
 
+  commander@10.0.1:
+    resolution:
+      {
+        integrity: sha512-y4Mg2tXshplEbSGzx7amzPwKKOCGuoSRP/CjEdwwk0FOGlUbq6lKuoyDZTNZkmxHdJtp54hdfY/JUrdL7Xfdug==,
+      }
+    engines: { node: '>=14' }
+
   commander@11.1.0:
     resolution:
       {
@@ -5946,6 +5956,14 @@ packages:
         integrity: sha512-U4kuulU3CKIytlkLlaHcGgKscNfJPNTiDF2avIUGFCv7K95/DCYQ7Ra62ydeRWmgQGg9zJYw2dzdbztwJlqrow==,
       }
     engines: { node: '>=20.17' }
+    hasBin: true
+
+  liquidjs@10.21.1:
+    resolution:
+      {
+        integrity: sha512-NZXmCwv3RG5nire3fmIn9HsOyJX3vo+ptp0yaXUHAMzSNBhx74Hm+dAGJvscUA6lNqbLuYfXgNavRQ9UbUJhQQ==,
+      }
+    engines: { node: '>=14' }
     hasBin: true
 
   listr2@9.0.3:
@@ -10274,6 +10292,8 @@ snapshots:
     dependencies:
       delayed-stream: 1.0.0
 
+  commander@10.0.1: {}
+
   commander@11.1.0: {}
 
   commander@12.1.0: {}
@@ -11212,6 +11232,10 @@ snapshots:
       yaml: 2.8.1
     transitivePeerDependencies:
       - supports-color
+
+  liquidjs@10.21.1:
+    dependencies:
+      commander: 10.0.1
 
   listr2@9.0.3:
     dependencies:

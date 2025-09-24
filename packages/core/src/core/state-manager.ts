@@ -1,15 +1,14 @@
 import { EventEmitter } from 'eventemitter3';
 import type { JSONSchema7 } from 'json-schema';
-import { ExpressionEvaluator } from './expression-evaluator';
 import { StateAction, StateRule } from '../types/flow-types';
-import { ExpressionLanguage } from '../types/expression-types';
+import { ExpressionEngine } from '../types/expression-types';
 import { IStateManager, StateManagerOptions } from '../types/execution-types';
 import { StateActionExecutor } from '../utils/state-executor';
 import {
   globalSchemaValidator,
   SchemaValidator,
 } from '../utils/schema-validator';
-import { EvaluatorFactory } from '../utils/evaluator-factory';
+import { createExpressionEngine } from '../expressions/engine-factory';
 
 export class StateManager<TState extends object = Record<string, unknown>>
   extends EventEmitter
@@ -17,8 +16,7 @@ export class StateManager<TState extends object = Record<string, unknown>>
 {
   private state: TState;
   private rules: StateRule[];
-  private expressionLanguage: ExpressionLanguage;
-  private evaluators: Record<string, ExpressionEvaluator>;
+  private engine: ExpressionEngine;
   private stateSchema: JSONSchema7 | undefined;
   private schemaValidator: SchemaValidator;
   private validateOnChange: boolean;
@@ -31,71 +29,62 @@ export class StateManager<TState extends object = Record<string, unknown>>
   ) {
     super();
     this.rules = rules;
-    this.expressionLanguage = options.expressionLanguage ?? 'cel';
-    this.evaluators = EvaluatorFactory.getDefaultEvaluators();
+    this.engine = createExpressionEngine(options.expressionLanguage);
     this.stateSchema = options.stateSchema;
     this.schemaValidator = globalSchemaValidator;
     this.validateOnChange = options.validateOnChange ?? true;
 
-    // Validate and set initial state
     this.validateState(initialState, 'Initial state validation failed');
     this.state = { ...initialState };
 
-    // Initialize shared action executor
     this.actionExecutor = new StateActionExecutor<TState>({
-      expressionLanguage: this.expressionLanguage,
-      evaluators: this.evaluators,
+      engine: this.engine,
       enableLogging: true,
     });
   }
 
   getState(): TState {
-    // Deep clone the state to avoid reference sharing for arrays/objects
-    return JSON.parse(JSON.stringify(this.state)) as TState;
+    return JSON.parse(JSON.stringify(this.state));
   }
 
-  setState(newState: Partial<TState>): void {
-    // Deep clone the state to avoid reference sharing for arrays/objects
-    const oldState = JSON.parse(JSON.stringify(this.state)) as TState;
-    const updatedState = { ...this.state, ...newState } as TState;
+  async setState(newState: Partial<TState>): Promise<void> {
+    const oldState = this.getState();
+    const updatedState = { ...this.state, ...newState };
 
-    // Validate new state if schema is provided
     this.validateState(updatedState, 'State update validation failed');
 
-    this.state = updatedState;
+    this.state = updatedState as TState;
     this.emit('stateChange', { oldState, newState: this.getState() });
-    this.evaluateRules();
+    await this.evaluateRules();
   }
 
-  executeActions(actions: StateAction[]): void {
-    // Deep clone the state to avoid reference sharing for arrays/objects
-    const oldState = JSON.parse(JSON.stringify(this.state)) as TState;
+  async executeActions(actions: StateAction[]): Promise<void> {
+    const oldState = this.getState();
+    const result = await this.actionExecutor.executeActions(
+      actions,
+      this.state
+    );
 
-    const result = this.actionExecutor.executeActions(actions, this.state);
-    const newState = result.newState;
+    this.validateState(result.newState, 'Action execution validation failed');
 
-    // Validate new state if schema is provided
-    this.validateState(newState, 'Action execution validation failed');
-
-    this.state = newState;
-
+    this.state = result.newState;
     this.emit('stateChange', { oldState, newState: this.getState() });
-    this.evaluateRules();
+    await this.evaluateRules();
   }
 
-  evaluateCondition(expression: string): boolean {
+  async evaluateCondition(expression: string): Promise<boolean> {
     return this.actionExecutor.evaluateCondition(expression, this.state);
   }
 
-  private evaluateRules(): void {
+  private async evaluateRules(): Promise<void> {
     for (const rule of this.rules) {
-      if (this.evaluateCondition(rule.condition)) {
-        this.executeRule(rule);
+      if (await this.evaluateCondition(rule.condition)) {
+        await this.executeRule(rule);
       }
     }
   }
 
-  private executeRule(rule: StateRule): void {
+  private async executeRule(rule: StateRule): Promise<void> {
     switch (rule.action) {
       case 'forceTransition':
         this.emit('error', {
@@ -103,11 +92,9 @@ export class StateManager<TState extends object = Record<string, unknown>>
           context: { rule, type: 'forceTransition' },
         });
         break;
-
       case 'setState':
         if (rule.target && rule.value !== undefined) {
-          // Use the shared executor for state setting
-          const result = this.actionExecutor.executeAction(
+          const result = await this.actionExecutor.executeAction(
             { type: 'set', target: rule.target, value: rule.value },
             this.state
           );
@@ -116,38 +103,25 @@ export class StateManager<TState extends object = Record<string, unknown>>
           }
         }
         break;
-
-      case 'triggerEvent':
-        // Custom event handling can be implemented here
-        break;
     }
   }
 
-  reset(newState: Partial<TState> = {} as Partial<TState>): void {
-    // Deep clone the old state to avoid reference sharing for arrays/objects
-    const oldState = JSON.parse(JSON.stringify(this.state)) as TState;
-    // Deep clone the new state to avoid reference sharing for arrays/objects
-    const resetState = JSON.parse(JSON.stringify(newState)) as TState;
+  async reset(newState: Partial<TState> = {}): Promise<void> {
+    const oldState = this.getState();
+    const resetState = JSON.parse(JSON.stringify(newState));
 
-    // Validate new state if schema is provided
     this.validateState(resetState, 'State reset validation failed');
 
     this.state = resetState;
     this.emit('stateChange', { oldState, newState: this.getState() });
-    this.evaluateRules();
+    await this.evaluateRules();
   }
 
-  /**
-   * Validate state against the JSON schema if one is provided
-   */
   private validateState(state: unknown, errorPrefix: string): void {
-    if (!this.stateSchema || !this.validateOnChange) {
-      return;
-    }
+    if (!this.stateSchema || !this.validateOnChange) return;
 
     try {
       const result = this.schemaValidator.validate(state, this.stateSchema);
-
       if (!result.isValid) {
         const error = new Error(`${errorPrefix}: ${result.errors.join(', ')}`);
         this.emit('error', {
@@ -157,12 +131,7 @@ export class StateManager<TState extends object = Record<string, unknown>>
         throw error;
       }
     } catch (error) {
-      if (error instanceof Error) {
-        // Re-throw validation errors
-        throw error;
-      }
-
-      // Handle unexpected errors
+      if (error instanceof Error) throw error;
       const validationError = new Error(
         `${errorPrefix}: Unexpected validation error`
       );

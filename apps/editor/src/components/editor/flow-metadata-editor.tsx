@@ -14,12 +14,13 @@ import {
 import { Badge } from '../ui/badge';
 import { X, Plus, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ExpressionLanguage } from '@zflo/core';
 
 interface FlowMetadata {
   id: string;
   title: string;
   description?: string;
-  expressionLanguage?: 'cel';
+  expressionLanguage?: ExpressionLanguage;
   stateSchema?: string; // JSON string for editing
   initialState?: string; // JSON string for editing
   metadata?: Record<string, unknown>;

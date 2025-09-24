@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { FlowEngine } from '../core/flow-engine';
 import type { FlowDefinition } from '../types/flow-types';
 import type { JSONSchema7 } from 'json-schema';
+import { StateManager } from '../core/state-manager';
 
 describe('FlowEngine Schema Validation Integration', () => {
   const gameStateSchema: JSONSchema7 = {
@@ -26,6 +27,7 @@ describe('FlowEngine Schema Validation Integration', () => {
   ): FlowDefinition => ({
     id: 'test-flow',
     title: 'Test Flow with Schema',
+    expressionLanguage: 'cel',
     nodes: [
       {
         id: 'start',
@@ -62,65 +64,40 @@ describe('FlowEngine Schema Validation Integration', () => {
         score: 0,
         inventory: ['sword'],
       };
-
       const flow = createTestFlow(validState, gameStateSchema);
-
-      expect(() => {
-        new FlowEngine(flow);
-      }).not.toThrow();
+      expect(() => new FlowEngine(flow)).not.toThrow();
     });
 
-    it('should reject invalid initial state during flow creation', () => {
+    it('should reject invalid initial state during flow creation', async () => {
       const invalidState = {
-        health: 150, // Above maximum
-        level: 0, // Below minimum
+        health: 150,
+        level: 0,
         invalidProperty: 'not allowed',
       };
-
       const flow = createTestFlow(invalidState, gameStateSchema);
-
-      expect(() => {
-        new FlowEngine(flow);
-      }).toThrow('Initial state validation failed');
+      expect(() => new FlowEngine(flow)).toThrow(
+        'Initial state validation failed'
+      );
     });
 
     it('should work without schema validation', async () => {
       const anyState = { anything: 'goes', when: 'no schema' };
-      const flow = createTestFlow(anyState); // No schema
-
-      expect(() => {
-        new FlowEngine(flow);
-      }).not.toThrow();
+      const flow = createTestFlow(anyState);
+      expect(() => new FlowEngine(flow)).not.toThrow();
     });
   });
 
   describe('State Validation During Flow Execution', () => {
     it('should validate state changes during node actions', async () => {
-      const validState = {
-        health: 100,
-        level: 1,
-        score: 0,
-      };
-
+      const validState = { health: 100, level: 1, score: 0 };
       const flow = createTestFlow(validState, gameStateSchema);
       const engine = new FlowEngine(flow);
-
       await engine.start();
-
-      // This should work - valid state change
-      expect(async () => {
-        await engine.next('to-action');
-      }).not.toThrow();
+      await expect(engine.next('to-action')).resolves.toBeDefined();
     });
 
     it('should reject invalid state changes from actions', async () => {
-      const validState = {
-        health: 5, // Low health
-        level: 1,
-        score: 0,
-      };
-
-      // Create flow with action that would make health negative
+      const validState = { health: 5, level: 1, score: 0 };
       const flowWithInvalidAction: FlowDefinition = {
         ...createTestFlow(validState, gameStateSchema),
         nodes: [
@@ -133,32 +110,22 @@ describe('FlowEngine Schema Validation Integration', () => {
             id: 'damage',
             title: 'Damage Node',
             actions: [
-              { type: 'set', target: 'health', expression: 'health - 10' }, // Would make health -5
+              { type: 'set', target: 'health', expression: 'health - 10' },
             ],
             outlets: [{ id: 'to-end', to: 'end', label: 'Continue' }],
           },
-          {
-            id: 'end',
-            title: 'End',
-          },
+          { id: 'end', title: 'End' },
         ],
       };
-
       const engine = new FlowEngine(flowWithInvalidAction);
       await engine.start();
-
-      expect(async () => {
-        await engine.next('to-damage');
-      }).rejects.toThrow('Action execution validation failed');
+      await expect(engine.next('to-damage')).rejects.toThrow(
+        'Action execution validation failed'
+      );
     });
 
     it('should emit error events for validation failures', async () => {
-      const validState = {
-        health: 1,
-        level: 1,
-        score: 0,
-      };
-
+      const validState = { health: 1, level: 1, score: 0 };
       const flowWithInvalidAction: FlowDefinition = {
         ...createTestFlow(validState, gameStateSchema),
         nodes: [
@@ -172,32 +139,19 @@ describe('FlowEngine Schema Validation Integration', () => {
           {
             id: 'invalid',
             title: 'Invalid Action',
-            actions: [
-              { type: 'set', target: 'health', value: -50 }, // Invalid negative health
-            ],
+            actions: [{ type: 'set', target: 'health', value: -50 }],
           },
         ],
       };
-
       const engine = new FlowEngine(flowWithInvalidAction);
       const errorSpy = vi.fn();
       engine.on('error', errorSpy);
-
       await engine.start();
-
-      try {
-        await engine.next('to-invalid');
-      } catch (error) {
-        // Expected to throw
-        expect(error).toBeInstanceOf(Error);
-      }
-
+      await expect(engine.next('to-invalid')).rejects.toThrow();
       expect(errorSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           error: expect.any(Error),
-          context: expect.objectContaining({
-            type: 'schemaValidation',
-          }),
+          context: expect.objectContaining({ type: 'schemaValidation' }),
         })
       );
     });
@@ -208,12 +162,9 @@ describe('FlowEngine Schema Validation Integration', () => {
       const state = {
         health: 100,
         level: 1,
-        inventory: ['item1', 'item2', 'item3', 'item4'], // 4 items, max is 5
+        inventory: ['item1', 'item2', 'item3', 'item4'],
       };
-
       const flow = createTestFlow(state, gameStateSchema);
-
-      // Should work - adding one more item (total 5, within limit)
       const validFlow: FlowDefinition = {
         ...flow,
         nodes: [
@@ -229,16 +180,11 @@ describe('FlowEngine Schema Validation Integration', () => {
             ],
             outlets: [{ id: 'to-end', to: 'end', label: 'Continue' }],
           },
-          {
-            id: 'end',
-            title: 'End',
-          },
+          { id: 'end', title: 'End' },
         ],
       };
-
       const validEngine = new FlowEngine(validFlow);
       await validEngine.start();
-
       expect(validEngine.getState().inventory).toHaveLength(5);
     });
 
@@ -262,15 +208,7 @@ describe('FlowEngine Schema Validation Integration', () => {
         },
         required: ['player'],
       };
-
-      const state = {
-        player: {
-          stats: {
-            strength: 50,
-          },
-        },
-      };
-
+      const state = { player: { stats: { strength: 50 } } };
       const invalidFlow: FlowDefinition = {
         id: 'complex-test',
         title: 'Complex Schema Test',
@@ -279,7 +217,7 @@ describe('FlowEngine Schema Validation Integration', () => {
             id: 'start',
             title: 'Start',
             actions: [
-              { type: 'set', target: 'player.stats.strength', value: 150 }, // Above max
+              { type: 'set', target: 'player.stats.strength', value: 150 },
             ],
           },
         ],
@@ -287,12 +225,10 @@ describe('FlowEngine Schema Validation Integration', () => {
         initialState: state,
         stateSchema: complexSchema,
       };
-
       const engine = new FlowEngine(invalidFlow);
-
-      await expect(async () => {
-        await engine.start();
-      }).rejects.toThrow('Action execution validation failed');
+      await expect(engine.start()).rejects.toThrow(
+        'Action execution validation failed'
+      );
     });
   });
 
@@ -300,22 +236,14 @@ describe('FlowEngine Schema Validation Integration', () => {
     it('should respect custom StateManager validation settings', async () => {
       const state = { health: 100, level: 1 };
       const flow = createTestFlow(state, gameStateSchema);
-
-      // Create engine with custom StateManager that has validation disabled
-      const customStateManager = new (
-        await import('../core/state-manager')
-      ).StateManager(state, [], {
+      const customStateManager = new StateManager(state, [], {
         stateSchema: gameStateSchema,
-        validateOnChange: false, // Disable validation
+        validateOnChange: false,
       });
-
       const engine = new FlowEngine(flow, {
         stateManager: customStateManager,
       });
-
-      // This should not throw even with invalid state because validation is disabled
-      customStateManager.setState({ health: -100 }); // Invalid but allowed
-
+      await customStateManager.setState({ health: -100 });
       expect(engine.getState().health).toBe(-100);
     });
   });
@@ -324,11 +252,8 @@ describe('FlowEngine Schema Validation Integration', () => {
     it('should handle multiple flows with same schema efficiently', () => {
       const state1 = { health: 100, level: 1 };
       const state2 = { health: 80, level: 2 };
-
       const flow1 = createTestFlow(state1, gameStateSchema);
       const flow2 = createTestFlow(state2, gameStateSchema);
-
-      // Both should use cached schema validator
       expect(() => {
         new FlowEngine(flow1);
         new FlowEngine(flow2);
@@ -361,6 +286,7 @@ describe('FlowEngine Schema Validation Integration', () => {
       const rpgFlow: FlowDefinition = {
         id: 'rpg-game',
         title: 'RPG Adventure',
+        expressionLanguage: 'cel',
         nodes: [
           {
             id: 'start',
@@ -390,7 +316,7 @@ describe('FlowEngine Schema Validation Integration', () => {
             content: 'You won the battle!',
             actions: [
               { type: 'set', target: 'level', expression: 'level + 1' },
-              { type: 'set', target: 'health', value: 100 }, // Full heal
+              { type: 'set', target: 'health', value: 100 },
             ],
           },
         ],
@@ -407,19 +333,16 @@ describe('FlowEngine Schema Validation Integration', () => {
       };
 
       const engine = new FlowEngine(rpgFlow);
-
-      await engine.start();
-      expect(engine.getCurrentContext()?.currentNode.definition.id).toBe(
-        'start'
-      );
+      const context = await engine.start();
+      expect(context.currentNode.definition.id).toBe('start');
 
       await engine.next('to-battle');
-      expect(engine.getState().health).toBe(80); // 100 - 20
+      expect(engine.getState().health).toBe(80);
       expect(engine.getState().experience).toBe(50);
 
       await engine.next('to-victory');
       expect(engine.getState().level).toBe(2);
-      expect(engine.getState().health).toBe(100); // Healed to full
+      expect(engine.getState().health).toBe(100);
     });
   });
 });

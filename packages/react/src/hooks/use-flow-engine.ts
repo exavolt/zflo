@@ -87,12 +87,12 @@ export function useFlowEngine(
         setHasStateChanged(false);
       }
 
-      const context = engine.getCurrentContext();
-
-      setCurrentNode(context?.currentNode || null);
-      setChoices(context?.availableChoices || []);
-      setIsComplete(context?.isComplete || false);
-      setCanGoBack(context?.canGoBack || false);
+      engine.getCurrentContext().then((context) => {
+        setCurrentNode(context?.currentNode || null);
+        setChoices(context?.availableChoices || []);
+        setIsComplete(context?.isComplete || false);
+        setCanGoBack(context?.canGoBack || false);
+      });
       setState(JSON.parse(JSON.stringify(newState))); // Deep clone new state
       setHistory(engine.getHistory());
     },
