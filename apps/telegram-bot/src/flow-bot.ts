@@ -1,4 +1,4 @@
-import { ZFFlow } from '@zflo/core';
+import { FlowDefinition } from '@zflo/core';
 import { TelegramFlowBot } from '@zflo/integ-telegram';
 import { FlowLoader } from './flow-loader.js';
 import { BotConfig, FlowBotOptions } from './types.js';
@@ -99,7 +99,7 @@ export class FlowBot {
     };
   }
 
-  private async loadFlow(): Promise<ZFFlow> {
+  private async loadFlow(): Promise<FlowDefinition> {
     // Validate the flow file first
     const validation = await this.flowLoader.validateFlow(
       this.config.flowFilePath

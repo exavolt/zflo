@@ -59,7 +59,7 @@ export function InlineDemo() {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Interactive Player</h3>
               <div className="rounded-lg border p-4 min-h-[300px]">
-                <FlowPlayer flowchart={flowchart} />
+                <FlowPlayer flow={flowchart} />
               </div>
             </div>
           </CardContent>

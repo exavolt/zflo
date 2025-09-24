@@ -55,7 +55,7 @@ import { FlowShareDialog } from '../flow/flow-share-dialog';
 import { ManageSharedFlowsDialog } from '../flow/manage-shared-flows-dialog';
 import { SaveFlowDialog } from './save-flow-dialog';
 import { LoadFlowsDialog } from './load-flows-dialog';
-import type { ZFFlow } from '@zflo/core';
+import type { FlowMetadata } from '@zflo/core';
 import type { UserFlow } from '@zflo/platform-core';
 import { useTheme } from '@/lib/use-theme';
 import {
@@ -144,12 +144,12 @@ export function FlowEditor() {
   }, []);
 
   // Flow metadata state
-  const [flowMetadata, setFlowMetadata] = useState<Partial<ZFFlow>>({
+  const [flowMetadata, setFlowMetadata] = useState<FlowMetadata>({
     id: uuidv4(),
     title: 'New Flow',
     description: '',
     expressionLanguage: 'cel',
-    globalState: {},
+    initialState: {},
     stateSchema: undefined,
     metadata: {},
   });
@@ -217,7 +217,7 @@ export function FlowEditor() {
           title: activeFlow.flowTitle,
           description: '',
           expressionLanguage: 'cel',
-          globalState: {},
+          initialState: {},
           stateSchema: undefined,
           metadata: {},
         }
@@ -234,7 +234,7 @@ export function FlowEditor() {
       title: 'New Flow',
       description: '',
       expressionLanguage: 'cel' as const,
-      globalState: {},
+      initialState: {},
       stateSchema: undefined,
       metadata: {},
     };
@@ -400,90 +400,6 @@ export function FlowEditor() {
     URL.revokeObjectURL(url);
   }, [nodes, edges, flowTitle, flowMetadata]);
 
-  // const importFlow = useCallback(() => {
-  //   const input = document.createElement('input');
-  //   input.type = 'file';
-  //   input.accept = '.json';
-  //   input.onchange = (e) => {
-  //     const file = (e.target as HTMLInputElement).files?.[0];
-  //     if (file) {
-  //       const reader = new FileReader();
-  //       reader.onload = (event) => {
-  //         try {
-  //           const flowData = JSON.parse(event.target?.result as string);
-  //           // Create a new flow with imported data
-  //           const newFlowId = createFlow(flowData.title || 'Imported Flow');
-
-  //           // Switch to the new flow and update its data
-  //           switchToFlow(newFlowId);
-
-  //           // The flow will be updated via the activeFlow effect
-  //           setTimeout(() => {
-  //             if (flowData.nodes && Array.isArray(flowData.nodes)) {
-  //               // Convert ZFlo nodes back to ReactFlow format if needed
-  //               const reactFlowNodes = flowData.nodes.map(
-  //                 (node: any, index: number) => ({
-  //                   id: node.id || `node-${index}`,
-  //                   type: 'zfloNode',
-  //                   position: { x: 100 + index * 250, y: 100 },
-  //                   data: {
-  //                     title: node.title || 'Untitled',
-  //                     content: node.content || '',
-  //                     outputCount: node.outlets?.length || 0,
-  //                     outlets: node.outlets || [],
-  //                     actions: node.actions || [],
-  //                   } as NodeData as unknown as Record<string, unknown>,
-  //                 })
-  //               );
-
-  //               // Create edges from outlets
-  //               const reactFlowEdges: Edge[] = [];
-  //               flowData.nodes.forEach((node: ZFNode) => {
-  //                 if (node.outlets) {
-  //                   node.outlets.forEach(
-  //                     (outlet: XFOutlet, outletIndex: number) => {
-  //                       if (outlet.to) {
-  //                         reactFlowEdges.push({
-  //                           id:
-  //                             outlet.id ||
-  //                             `${node.id}-${outlet.to}-${outletIndex}`,
-  //                           source: node.id,
-  //                           target: outlet.to,
-  //                           sourceHandle: outlet.id,
-  //                           label: outlet.label,
-  //                           markerEnd: defaultEdgeMarkerEnd,
-  //                         });
-  //                       }
-  //                     }
-  //                   );
-  //                 }
-  //               });
-
-  //               setNodes(reactFlowNodes);
-  //               setEdges(reactFlowEdges);
-  //               setFlowTitle(flowData.title || 'Imported Flow');
-  //               setFlowMetadata({
-  //                 id: flowData.id || uuidv4(),
-  //                 title: flowData.title || 'Imported Flow',
-  //                 description: flowData.description || '',
-  //                 expressionLanguage: flowData.expressionLanguage || 'cel',
-  //                 globalState: flowData.globalState || {},
-  //                 stateSchema: flowData.stateSchema,
-  //                 metadata: flowData.metadata || {},
-  //               });
-  //             }
-  //           }, 100);
-  //         } catch (error) {
-  //           console.error('Failed to import flow:', error);
-  //           toast('Failed to import flow. Please check the file format.');
-  //         }
-  //       };
-  //       reader.readAsText(file);
-  //     }
-  //   };
-  //   input.click();
-  // }, [createFlow, switchToFlow, setNodes, setEdges]);
-
   // Prevent deletion of the last node
   const onBeforeDelete = (_params: {
     nodes: Node[];
@@ -534,7 +450,7 @@ export function FlowEditor() {
               <div className="overflow-auto flex-1 -mx-6 -mb-6 pb-6">
                 {isPreviewOpen && (
                   <FlowPlayer
-                    flowchart={generateZFloFlow()}
+                    flow={generateZFloFlow()}
                     autoStart={false}
                     enableTypingAnimation={false}
                     typingSpeed={3}
@@ -692,10 +608,10 @@ export function FlowEditor() {
             title: flowMetadata.title ?? flowTitle,
             description: flowMetadata.description,
             expressionLanguage: flowMetadata.expressionLanguage,
-            globalState: flowMetadata.globalState,
+            initialState: flowMetadata.initialState,
             stateSchema: flowMetadata.stateSchema,
             stateRules: flowMetadata.stateRules,
-            autoAdvance: flowMetadata.autoAdvance,
+            autoAdvanceMode: flowMetadata.autoAdvanceMode,
             metadata: flowMetadata.metadata,
           },
         }}
@@ -767,9 +683,29 @@ export function FlowEditor() {
       <FlowMetadataEditor
         isOpen={activeSheet === 'metadata'}
         onClose={() => setActiveSheet(null)}
-        flow={flowMetadata}
+        flow={{
+          id: flowMetadata.id,
+          title: flowMetadata.title,
+          description: flowMetadata.description,
+          expressionLanguage: flowMetadata.expressionLanguage,
+          stateSchema: flowMetadata.stateSchema?.toString() || undefined,
+          initialState: flowMetadata.initialState?.toString() || undefined,
+          metadata: flowMetadata.metadata,
+        }}
         onSave={(metadata) => {
-          setFlowMetadata(metadata);
+          setFlowMetadata({
+            id: metadata.id,
+            title: metadata.title,
+            description: metadata.description,
+            expressionLanguage: metadata.expressionLanguage,
+            stateSchema: metadata.stateSchema
+              ? JSON.parse(metadata.stateSchema)
+              : undefined,
+            initialState: metadata.initialState
+              ? JSON.parse(metadata.initialState)
+              : undefined,
+            metadata: metadata.metadata,
+          });
           if (metadata.title && metadata.title !== flowTitle) {
             setFlowTitle(metadata.title);
           }

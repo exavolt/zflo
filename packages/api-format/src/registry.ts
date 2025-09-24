@@ -7,7 +7,7 @@ import type {
   FormatResult,
   FormatValidationResult,
 } from './types';
-import type { ZFFlow } from '../../core/dist';
+import type { FlowDefinition } from '@zflo/core';
 
 /**
  * Format registry error types
@@ -201,11 +201,11 @@ export class FormatRegistry {
 
     try {
       const format = this.getFormat(detection.format);
-      const flowchart = format.parser.parse(code);
+      const flow = format.parser.parse(code);
 
       return {
         success: true,
-        flowchart,
+        flow,
       };
     } catch (error) {
       // Try fallback parsing with other formats
@@ -233,11 +233,11 @@ export class FormatRegistry {
   ): ParseResult {
     try {
       const format = this.getFormat(formatId);
-      const flowchart = format.parser.parse(code, options);
+      const flow = format.parser.parse(code, options);
 
       return {
         success: true,
-        flowchart,
+        flow,
       };
     } catch (error) {
       return {
@@ -250,10 +250,10 @@ export class FormatRegistry {
   }
 
   /**
-   * Format ZFFlow to specific format
+   * Format FlowDefinition to specific format
    */
   format(
-    flowchart: ZFFlow,
+    flow: FlowDefinition,
     formatId: FormatId,
     options?: Record<string, unknown>
   ): FormatResult {
@@ -267,7 +267,7 @@ export class FormatRegistry {
         };
       }
 
-      const output = format.formatter.format(flowchart, options);
+      const output = format.formatter.format(flow, options);
 
       return {
         success: true,
@@ -333,11 +333,11 @@ export class FormatRegistry {
 
     for (const format of otherFormats) {
       try {
-        const flowchart = format.parser.parse(code);
-        if (flowchart && flowchart.nodes && flowchart.nodes.length > 0) {
+        const flow = format.parser.parse(code);
+        if (flow && flow.nodes && flow.nodes.length > 0) {
           return {
             success: true,
-            flowchart,
+            flow,
             warnings: [
               `Parsed as ${format.formatId} instead of detected ${primaryFormat}`,
             ],

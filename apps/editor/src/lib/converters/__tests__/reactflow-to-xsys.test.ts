@@ -30,7 +30,7 @@ describe('convertReactFlowToZFlo', () => {
     expect(firstNode!.id).toBe('node-1');
     expect(firstNode!.title).toBe('Start Node');
     expect(firstNode!.content).toBe('This is the start');
-    expect(firstNode!.isAutoAdvance).toBe(false);
+    expect(firstNode!.autoAdvance).toBe(false);
     expect(firstNode!.outlets).toHaveLength(0);
     expect(result.startNodeId).toBe('node-1');
   });
@@ -139,9 +139,9 @@ describe('convertReactFlowToZFlo', () => {
       (n) => n.id === 'auto-undefined'
     );
 
-    expect(autoTrueNode?.isAutoAdvance).toBe(true);
-    expect(autoFalseNode?.isAutoAdvance).toBe(false);
-    expect(autoUndefinedNode?.isAutoAdvance).toBe(false);
+    expect(autoTrueNode?.autoAdvance).toBe(true);
+    expect(autoFalseNode?.autoAdvance).toBe(false);
+    expect(autoUndefinedNode?.autoAdvance).toBe(false);
   });
 
   it('should handle outlets with conditions', () => {
@@ -243,14 +243,16 @@ describe('convertReactFlowToZFlo', () => {
     ];
 
     const metadata = {
+      id: 'test-flow',
+      title: 'Test Flow',
       description: 'Test description',
-      globalState: { testVar: 'value' },
+      initialState: { testVar: 'value' },
     };
 
     const result = convertReactFlowToZFlo(nodes, [], 'Test Flow', metadata);
 
     expect(result.description).toBe('Test description');
-    expect(result.globalState).toEqual({ testVar: 'value' });
+    expect(result.initialState).toEqual({ testVar: 'value' });
     expect(result.id).toBeDefined();
   });
 });

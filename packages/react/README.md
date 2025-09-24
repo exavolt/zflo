@@ -11,9 +11,9 @@ pnpm add @zflo/react @zflo/core
 ## Usage
 
 ```tsx
-import { useFlowEngine, type ZFFlow } from '@zflo/react';
+import { useFlowEngine, type FlowDefinition } from '@zflo/react';
 
-export function FlowRunner({ flow }: { flow: ZFFlow }) {
+export function FlowRunner({ flow }: { flow: FlowDefinition }) {
   const { currentNode, choices, isComplete, makeChoice, reset } =
     useFlowEngine(flow);
 

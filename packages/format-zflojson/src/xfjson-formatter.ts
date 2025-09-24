@@ -1,10 +1,10 @@
-import { ZFFlow } from '@zflo/core';
+import { FlowDefinition } from '@zflo/core';
 import type { FormatFormatter } from '@zflo/api-format';
 
 export class ZFloJsonFormatter
   implements FormatFormatter<Record<string, unknown>>
 {
-  format(flow: ZFFlow, options?: Record<string, unknown>): string {
+  format(flow: FlowDefinition, options?: Record<string, unknown>): string {
     const indent = options?.indent || 2;
     const sortKeys = options?.sortKeys || false;
 
@@ -22,9 +22,9 @@ export class ZFloJsonFormatter
     return JSON.stringify(cleanFlow, null, indent as number);
   }
 
-  private cleanFlow(flow: ZFFlow): ZFFlow {
+  private cleanFlow(flow: FlowDefinition): FlowDefinition {
     // Remove any undefined or null values and ensure consistent structure
-    const cleaned: ZFFlow = {
+    const cleaned: FlowDefinition = {
       id: flow.id,
       title: flow.title || 'Untitled Flow',
       startNodeId: flow.startNodeId,

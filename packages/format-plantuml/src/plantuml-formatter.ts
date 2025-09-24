@@ -1,13 +1,13 @@
-import { ZFFlow } from '@zflo/core';
+import { FlowDefinition, NodeDefinition } from '@zflo/core';
 import { FormatFormatter } from '@zflo/api-format';
 
 /**
- * PlantUML formatter that converts ZFFlow to PlantUML Activity diagram format
+ * PlantUML formatter that converts ZFlo FlowDefinition to PlantUML Activity diagram format
  */
 export class PlantUMLFormatter
   implements FormatFormatter<Record<string, unknown>>
 {
-  format(flow: ZFFlow, _options?: Record<string, unknown>): string {
+  format(flow: FlowDefinition, _options?: Record<string, unknown>): string {
     const lines: string[] = [];
 
     lines.push('@startuml');
@@ -88,7 +88,7 @@ export class PlantUMLFormatter
     return text.replace(/\n/g, '\\n').replace(/;/g, '\\;').replace(/:/g, '\\:');
   }
 
-  private generateCondition(node: ZFFlow['nodes'][0]): string {
+  private generateCondition(node: NodeDefinition): string {
     // Generate a condition based on node content
     const content = node.title || node.content || node.id;
     if (content.includes('?')) {

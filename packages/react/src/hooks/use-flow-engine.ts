@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   FlowEngine,
-  ZFFlow,
-  Choice,
   ExecutionStep,
   EngineOptions,
   AutoAdvanceMode,
-  AnnotatedNode,
+  RuntimeNode,
+  RuntimeChoice,
+  FlowDefinition,
 } from '@zflo/core';
 
 export interface UseFlowEngineOptions {
@@ -19,8 +19,8 @@ export interface UseFlowEngineOptions {
 }
 
 export interface UseFlowEngineReturn {
-  currentNode: AnnotatedNode | null;
-  choices: Choice[];
+  currentNode: RuntimeNode | null;
+  choices: RuntimeChoice[];
   isComplete: boolean;
   canGoBack: boolean;
   isLoading: boolean;
@@ -36,14 +36,12 @@ export interface UseFlowEngineReturn {
 }
 
 export function useFlowEngine(
-  flowchart: ZFFlow,
+  flow: FlowDefinition,
   options?: EngineOptions
 ): UseFlowEngineReturn {
-  const [engine, setEngine] = useState(
-    () => new FlowEngine(flowchart, options)
-  );
-  const [currentNode, setCurrentNode] = useState<AnnotatedNode | null>(null);
-  const [choices, setChoices] = useState<Choice[]>([]);
+  const [engine, setEngine] = useState(() => new FlowEngine(flow, options));
+  const [currentNode, setCurrentNode] = useState<RuntimeNode | null>(null);
+  const [choices, setChoices] = useState<RuntimeChoice[]>([]);
   const [isComplete, setIsComplete] = useState(false);
   const [canGoBack, setCanGoBack] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -56,10 +54,10 @@ export function useFlowEngine(
   const [history, setHistory] = useState<ExecutionStep[]>([]);
 
   // Reset engine when flowchart changes (use ref to track previous flowchart)
-  const prevFlowchartRef = useRef<ZFFlow | null>(null);
+  const prevFlowRef = useRef<FlowDefinition | null>(null);
   useEffect(() => {
-    if (prevFlowchartRef.current && prevFlowchartRef.current !== flowchart) {
-      const newEngine = new FlowEngine(flowchart, options);
+    if (prevFlowRef.current && prevFlowRef.current !== flow) {
+      const newEngine = new FlowEngine(flow, options);
       setEngine(newEngine);
       setCurrentNode(null);
       setChoices([]);
@@ -71,8 +69,8 @@ export function useFlowEngine(
       setHasStateChanged(false);
       setHistory([]);
     }
-    prevFlowchartRef.current = flowchart;
-  }, [flowchart, options]);
+    prevFlowRef.current = flow;
+  }, [flow, options]);
 
   const updateState = useCallback(
     (skipStateChangeTracking = false) => {
@@ -89,10 +87,12 @@ export function useFlowEngine(
         setHasStateChanged(false);
       }
 
-      setCurrentNode(engine.getCurrentNode());
-      setChoices(engine.getAvailableChoices());
-      setIsComplete(engine.isComplete());
-      setCanGoBack(engine.canGoBack());
+      const context = engine.getCurrentContext();
+
+      setCurrentNode(context?.currentNode || null);
+      setChoices(context?.availableChoices || []);
+      setIsComplete(context?.isComplete || false);
+      setCanGoBack(context?.canGoBack || false);
       setState(JSON.parse(JSON.stringify(newState))); // Deep clone new state
       setHistory(engine.getHistory());
     },

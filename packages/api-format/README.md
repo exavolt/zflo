@@ -73,7 +73,7 @@ const parser: FormatParser = {
 
 // Create formatter (optional)
 const formatter: FormatFormatter = {
-  format(flow: ZFFlow) {
+  format(flow: FlowDefinition) {
     // Format logic here
     return formattedCode;
   },
@@ -127,7 +127,7 @@ export { MyFormatParser, MyFormatFormatter, MyFormatDetector };
 
 ```typescript
 interface FormatParser<TOptions = Record<string, unknown>> {
-  parse(code: string, options?: TOptions): ZFFlow;
+  parse(code: string, options?: TOptions): FlowDefinition;
   validate?(code: string, options?: TOptions): FormatValidationResult;
   getDefaultOptions?(): TOptions;
 }
@@ -137,7 +137,7 @@ interface FormatParser<TOptions = Record<string, unknown>> {
 
 ```typescript
 interface FormatFormatter<TOptions = Record<string, unknown>> {
-  format(flow: ZFFlow, options?: TOptions): string;
+  format(flow: FlowDefinition, options?: TOptions): string;
   getDefaultOptions?(): TOptions;
 }
 ```

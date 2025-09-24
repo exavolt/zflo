@@ -1,4 +1,4 @@
-import type { ZFFlow } from '../../core/dist';
+import type { FlowDefinition } from '@zflo/core';
 
 /**
  * Standardized format identifier
@@ -22,7 +22,7 @@ export interface FormatDetectionResult {
  */
 export interface ParseResult {
   success: boolean;
-  flowchart?: ZFFlow;
+  flow?: FlowDefinition;
   error?: string;
   warnings?: string[];
 }
@@ -47,15 +47,15 @@ export interface FormatValidationResult {
 }
 
 /**
- * Format parser interface - converts format-specific syntax to ZFFlow
+ * Format parser interface - converts format-specific syntax to FlowDefinition
  */
 export interface FormatParser<
   TOptions extends Record<string, unknown> = Record<string, unknown>,
 > {
   /**
-   * Parse format-specific code into ZFFlow
+   * Parse format-specific code into FlowDefinition
    */
-  parse(code: string, options?: TOptions): ZFFlow;
+  parse(code: string, options?: TOptions): FlowDefinition;
 
   /**
    * Validate format syntax without full parsing
@@ -69,15 +69,15 @@ export interface FormatParser<
 }
 
 /**
- * Format formatter interface - converts ZFFlow to format-specific syntax
+ * Format formatter interface - converts FlowDefinition to format-specific syntax
  */
 export interface FormatFormatter<
   TOptions extends Record<string, unknown> = Record<string, unknown>,
 > {
   /**
-   * Format ZFFlow into format-specific syntax
+   * Format FlowDefinition into format-specific syntax
    */
-  format(flow: ZFFlow, options?: TOptions): string;
+  format(flow: FlowDefinition, options?: TOptions): string;
 
   /**
    * Get formatter-specific options schema or defaults

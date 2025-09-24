@@ -1,4 +1,4 @@
-import { ZFFlow, ZFNode } from '@zflo/core';
+import { FlowDefinition, NodeDefinition } from '@zflo/core';
 import { FlowValidator } from '@zflo/core';
 import type { FormatParser, FormatValidationResult } from '@zflo/api-format';
 
@@ -39,7 +39,7 @@ interface MermaidAST {
 export class MermaidParser implements FormatParser {
   private validator = new FlowValidator();
 
-  parse(mermaidCode: string): ZFFlow {
+  parse(mermaidCode: string): FlowDefinition {
     try {
       // Parse YAML front-matter if present
       const { title, description, syntax } =
@@ -331,8 +331,8 @@ export class MermaidParser implements FormatParser {
     ast: MermaidAST,
     title?: string,
     description?: string
-  ): ZFFlow {
-    const nodes: ZFNode[] = ast.nodes.map((node): ZFNode => {
+  ): FlowDefinition {
+    const nodes: NodeDefinition[] = ast.nodes.map((node): NodeDefinition => {
       // Use formatted node ID if text is empty or practically empty
       const displayText = this.isEmptyLabel(node.text)
         ? this.formatNodeTitle(node.id)
@@ -343,7 +343,7 @@ export class MermaidParser implements FormatParser {
         id: node.id,
         title: displayText,
         content: fullContent,
-        isAutoAdvance: false,
+        autoAdvance: false,
         outlets: ast.edges
           .filter((edge) => edge.from === node.id)
           .map((edge, index) => ({
@@ -362,7 +362,7 @@ export class MermaidParser implements FormatParser {
       description,
       nodes,
       startNodeId,
-      globalState: {},
+      initialState: {},
       metadata: {
         originalTitle: title,
         originalDescription: description,

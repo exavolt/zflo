@@ -1,4 +1,4 @@
-import { ZFFlow } from '@zflo/core';
+import { FlowDefinition } from '@zflo/core';
 import type { FormatParser } from '@zflo/api-format';
 
 interface ValidationResult {
@@ -8,7 +8,7 @@ interface ValidationResult {
 }
 
 export class ZFloJsonParser implements FormatParser<Record<string, unknown>> {
-  parse(code: string, _options?: Record<string, unknown>): ZFFlow {
+  parse(code: string, _options?: Record<string, unknown>): FlowDefinition {
     try {
       const parsed = JSON.parse(code.trim());
 
@@ -53,7 +53,7 @@ export class ZFloJsonParser implements FormatParser<Record<string, unknown>> {
       }
 
       // Ensure required fields exist with defaults
-      const flowchart: ZFFlow = {
+      const flow: FlowDefinition = {
         id: parsed.id,
         title: parsed.title || 'Untitled Flow',
         nodes: parsed.nodes || [],
@@ -61,7 +61,7 @@ export class ZFloJsonParser implements FormatParser<Record<string, unknown>> {
         ...parsed, // Include any additional fields
       };
 
-      return flowchart;
+      return flow;
     } catch (error) {
       if (error instanceof SyntaxError) {
         throw new Error(`Invalid JSON syntax: ${error.message}`);

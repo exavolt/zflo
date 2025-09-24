@@ -1,4 +1,4 @@
-import { ZFFlow, ZFNode } from '@zflo/core';
+import { FlowDefinition, NodeDefinition } from '@zflo/core';
 import { FormatParser } from '@zflo/api-format';
 import {
   ASTBaseParentNode,
@@ -17,7 +17,7 @@ import {
  * Uses @ts-graphviz/ast to parse DOT and traverses the AST to extract nodes and edges.
  */
 export class DotParser implements FormatParser<Record<string, unknown>> {
-  parse(dot: string, _options?: Record<string, unknown>): ZFFlow {
+  parse(dot: string, _options?: Record<string, unknown>): FlowDefinition {
     // Parse DOT into AST (throws on invalid)
     let ast: DotASTNode;
     try {
@@ -31,7 +31,7 @@ export class DotParser implements FormatParser<Record<string, unknown>> {
     const { nodes, edgesOrder, graphLabel } = this.collectFromAst(ast);
 
     // Build ZFlo nodes
-    const zfloNodes: ZFNode[] = Array.from(nodes.values()).map((n) => ({
+    const zfloNodes: NodeDefinition[] = Array.from(nodes.values()).map((n) => ({
       id: n.id,
       title: n.label
         ? this.sanitizeNodeText(n.label)
@@ -65,7 +65,7 @@ export class DotParser implements FormatParser<Record<string, unknown>> {
       title: graphLabel ? this.sanitizeNodeText(graphLabel) : 'DOT Digraph',
       nodes: zfloNodes,
       startNodeId,
-      globalState: {},
+      initialState: {},
       metadata: { source: 'dot' },
     };
   }
@@ -183,7 +183,7 @@ export class DotParser implements FormatParser<Record<string, unknown>> {
     return undefined;
   }
 
-  private pickStartNode(nodes: ZFNode[]): string {
+  private pickStartNode(nodes: NodeDefinition[]): string {
     const idsWithIncoming = new Set<string>();
     for (const n of nodes)
       for (const p of n.outlets ?? []) idsWithIncoming.add(p.to);

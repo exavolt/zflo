@@ -1,24 +1,24 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { ZFFlow, ExecutionStep, AnnotatedNode } from '@zflo/core';
+import { FlowDefinition, ExecutionStep, RuntimeNode } from '@zflo/core';
 import { FlowPlayer } from '@zflo/ui-react-tw';
 import { FlowViz } from '@zflo/viz-reactflow';
 
 interface IntegratedFlowPlayerProps {
-  flowchart: ZFFlow;
+  flow: FlowDefinition;
   showFlowchart?: boolean;
   onComplete?: (finalState: Record<string, unknown>) => void;
   enableTypingAnimation?: boolean;
 }
 
 export const IntegratedFlowPlayer: React.FC<IntegratedFlowPlayerProps> = ({
-  flowchart,
+  flow,
   showFlowchart = true,
   onComplete,
   enableTypingAnimation = false,
 }) => {
   // State to hold execution information for Mermaid visualization
   const [executionState, setExecutionState] = useState<{
-    currentNode?: AnnotatedNode | null;
+    currentNode?: RuntimeNode | null;
     history?: ExecutionStep[];
   }>({});
 
@@ -31,7 +31,7 @@ export const IntegratedFlowPlayer: React.FC<IntegratedFlowPlayerProps> = ({
 
   // Handle execution state changes from FlowPlayer - memoized to prevent re-render loops
   const handleExecutionStateChange = useCallback(
-    (state: { currentNode: any; history: any[] }) => {
+    (state: { currentNode: RuntimeNode; history: ExecutionStep[] }) => {
       setExecutionState({
         currentNode: state.currentNode,
         history: state.history,
@@ -45,7 +45,7 @@ export const IntegratedFlowPlayer: React.FC<IntegratedFlowPlayerProps> = ({
       {/* Flow Player */}
       <div className="flex-1 overflow-auto">
         <FlowPlayer
-          flowchart={flowchart}
+          flow={flow}
           autoStart={true}
           onComplete={onComplete}
           onExecutionStateChange={handleExecutionStateChange}
@@ -62,8 +62,8 @@ export const IntegratedFlowPlayer: React.FC<IntegratedFlowPlayerProps> = ({
       {/* Flow Visualization */}
       {showFlowchart && (
         <FlowViz
-          flow={flowchart}
-          currentNodeId={executionState.currentNode?.node.id}
+          flow={flow}
+          currentNodeId={executionState.currentNode?.definition.id}
           history={executionState.history}
           className="h-full flex-1 lg:max-w-md overflow-auto relative"
           style={{ minHeight: '400px' }}

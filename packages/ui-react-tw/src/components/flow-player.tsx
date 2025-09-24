@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useFlowEngine, useTypingAnimation } from '@zflo/react';
-import { ZFFlow } from '@zflo/core';
+import { FlowDefinition } from '@zflo/core';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Play, RotateCcw, ArrowLeft, Loader2 } from 'lucide-react';
@@ -10,7 +10,7 @@ import { StatusBar } from './status-bar';
 import { AutoAdvanceMode } from '@zflo/core';
 
 export interface FlowPlayerProps {
-  flowchart: ZFFlow;
+  flow: FlowDefinition;
   onStateChange?: (state: Record<string, unknown>) => void;
   onComplete?: (finalState: Record<string, unknown>) => void;
   onExecutionStateChange?: (executionState: {
@@ -34,7 +34,7 @@ export interface FlowPlayerProps {
 }
 
 export const FlowPlayer: React.FC<FlowPlayerProps> = ({
-  flowchart,
+  flow,
   options,
   onComplete,
   onStateChange,
@@ -60,7 +60,7 @@ export const FlowPlayer: React.FC<FlowPlayerProps> = ({
     goBack,
     reset,
     start,
-  } = useFlowEngine(flowchart, options);
+  } = useFlowEngine(flow, options);
 
   // Auto-start the flowchart
   React.useEffect(() => {
@@ -111,7 +111,7 @@ export const FlowPlayer: React.FC<FlowPlayerProps> = ({
 
   // Typing animation for node content
   const { displayedText, isTyping, skipToEnd } = useTypingAnimation({
-    text: currentNode?.node.content || '',
+    text: currentNode?.definition.content || '',
     speed: typingSpeed,
     interval: typingInterval,
     enabled: enableTypingAnimation,
@@ -156,10 +156,10 @@ export const FlowPlayer: React.FC<FlowPlayerProps> = ({
       <div className={cn('w-full max-w-2xl mx-auto', className)}>
         <Card>
           <CardHeader>
-            <CardTitle>{flowchart.title || 'Ready to start'}</CardTitle>
-            {flowchart.description && (
+            <CardTitle>{flow.title || 'Ready to start'}</CardTitle>
+            {flow.description && (
               <p className="text-sm text-muted-foreground">
-                {flowchart.description}
+                {flow.description}
               </p>
             )}
           </CardHeader>
@@ -193,7 +193,8 @@ export const FlowPlayer: React.FC<FlowPlayerProps> = ({
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              {currentNode.node.title || `Node ${currentNode.node.id}`}
+              {currentNode.definition.title ||
+                `Node ${currentNode.definition.id}`}
             </CardTitle>
             {canGoBack && !isComplete && (
               <Button
@@ -209,7 +210,7 @@ export const FlowPlayer: React.FC<FlowPlayerProps> = ({
           </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
-          {currentNode.node.content && (
+          {currentNode.definition.content && (
             <div
               className="whitespace-pre-line"
               onClick={isTyping ? skipToEnd : undefined}
@@ -228,16 +229,16 @@ export const FlowPlayer: React.FC<FlowPlayerProps> = ({
               <div className="grid gap-2">
                 {choices.map((choice) => (
                   <Button
-                    key={choice.id}
-                    onClick={() => handleChoice(choice.id)}
-                    disabled={isLoading || choice.disabled || isTyping}
+                    key={choice.outletId}
+                    onClick={() => handleChoice(choice.outletId)}
+                    disabled={isLoading || !choice.isEnabled || isTyping}
                     variant="outline"
                     className={cn(
                       'w-full justify-start text-left h-auto py-3 px-4',
-                      choice.disabled && 'opacity-50 cursor-not-allowed'
+                      !choice.isEnabled && 'opacity-50 cursor-not-allowed'
                     )}
                     title={
-                      choice.disabled
+                      !choice.isEnabled
                         ? choice.disabledReason
                         : choice.description
                     }
@@ -245,7 +246,7 @@ export const FlowPlayer: React.FC<FlowPlayerProps> = ({
                     {isLoading && <Loader2 className="w-4 h-4 nimate-spin" />}
                     <div className="flex flex-col items-start">
                       <span>{choice.label}</span>
-                      {choice.disabled && choice.disabledReason && (
+                      {!choice.isEnabled && choice.disabledReason && (
                         <span className="text-xs text-muted-foreground mt-1">
                           {choice.disabledReason}
                         </span>

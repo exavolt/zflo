@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { ZFFlow } from '@zflo/core';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../ui/sheet';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -22,15 +21,15 @@ interface FlowMetadata {
   description?: string;
   expressionLanguage?: 'cel';
   stateSchema?: string; // JSON string for editing
-  globalState?: string; // JSON string for editing
+  initialState?: string; // JSON string for editing
   metadata?: Record<string, unknown>;
 }
 
 interface FlowMetadataEditorProps {
   isOpen: boolean;
   onClose: () => void;
-  flow: Partial<ZFFlow>;
-  onSave: (metadata: Partial<ZFFlow>) => void;
+  flow: FlowMetadata;
+  onSave: (metadata: FlowMetadata) => void;
 }
 
 export function FlowMetadataEditor({
@@ -45,7 +44,7 @@ export function FlowMetadataEditor({
     description: '',
     expressionLanguage: 'cel',
     stateSchema: '',
-    globalState: '',
+    initialState: '',
     metadata: {},
   });
 
@@ -53,7 +52,7 @@ export function FlowMetadataEditor({
   const [newMetadataKey, setNewMetadataKey] = useState('');
   const [errors, setErrors] = useState<{
     stateSchema?: string;
-    globalState?: string;
+    initialState?: string;
   }>({});
 
   // Initialize form data when flow changes
@@ -67,8 +66,8 @@ export function FlowMetadataEditor({
         stateSchema: flow.stateSchema
           ? JSON.stringify(flow.stateSchema, null, 2)
           : '',
-        globalState: flow.globalState
-          ? JSON.stringify(flow.globalState, null, 2)
+        initialState: flow.initialState
+          ? JSON.stringify(flow.initialState, null, 2)
           : '',
         metadata: flow.metadata || {},
       });
@@ -97,7 +96,7 @@ export function FlowMetadataEditor({
     setFormData((prev) => ({ ...prev, [field]: value }));
 
     // Validate JSON fields
-    if (field === 'stateSchema' || field === 'globalState') {
+    if (field === 'stateSchema' || field === 'initialState') {
       validateJSON(value, field);
     }
   };
@@ -140,17 +139,17 @@ export function FlowMetadataEditor({
       formData.stateSchema || '',
       'stateSchema'
     );
-    const globalStateValid = validateJSON(
-      formData.globalState || '',
-      'globalState'
+    const initialStateValid = validateJSON(
+      formData.initialState || '',
+      'initialState'
     );
 
-    if (!stateSchemaValid || !globalStateValid) {
+    if (!stateSchemaValid || !initialStateValid) {
       return;
     }
 
     try {
-      const updatedFlow: Partial<ZFFlow> = {
+      const updatedFlow: FlowMetadata = {
         id: formData.id,
         title: formData.title,
         description: formData.description || undefined,
@@ -158,8 +157,8 @@ export function FlowMetadataEditor({
         stateSchema: formData.stateSchema
           ? JSON.parse(formData.stateSchema)
           : undefined,
-        globalState: formData.globalState
-          ? JSON.parse(formData.globalState)
+        initialState: formData.initialState
+          ? JSON.parse(formData.initialState)
           : undefined,
         metadata:
           Object.keys(formData.metadata || {}).length > 0
@@ -252,19 +251,21 @@ export function FlowMetadataEditor({
               <Label htmlFor="global-state">Global State (JSON)</Label>
               <Textarea
                 id="global-state"
-                value={formData.globalState}
+                value={formData.initialState}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                  handleInputChange('globalState', e.target.value)
+                  handleInputChange('initialState', e.target.value)
                 }
                 placeholder='{"health": 100, "level": 1}'
                 rows={4}
                 className={cn(
                   'font-mono',
-                  errors.globalState ? 'border-destructive' : ''
+                  errors.initialState ? 'border-destructive' : ''
                 )}
               />
-              {errors.globalState && (
-                <p className="text-sm text-destructive">{errors.globalState}</p>
+              {errors.initialState && (
+                <p className="text-sm text-destructive">
+                  {errors.initialState}
+                </p>
               )}
             </div>
 
@@ -358,7 +359,7 @@ export function FlowMetadataEditor({
         <div className="flex gap-2 py-4 px-4 border-t">
           <Button
             onClick={handleSave}
-            disabled={!!errors.stateSchema || !!errors.globalState}
+            disabled={!!errors.stateSchema || !!errors.initialState}
             className="flex-1"
           >
             <Save />

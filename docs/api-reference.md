@@ -8,7 +8,7 @@ The main flow execution engine for ZFlo.
 
 ```typescript
 class FlowEngine {
-  constructor(flowchart: ZFFlow, options?: EngineOptions);
+  constructor(flowchart: FlowDefinition, options?: EngineOptions);
 
   // Execution control
   start(): Promise<ExecutionResult>;
@@ -17,7 +17,7 @@ class FlowEngine {
   goBack(): Promise<ExecutionResult | null>;
 
   // State access
-  getCurrentNode(): ZFNode | null;
+  getCurrentNode(): NodeDefinition | null;
   getHistory(): ExecutionStep[];
   getAvailableChoices(): Choice[];
   getState(): Record<string, any>;
@@ -48,7 +48,7 @@ interface Choice {
 }
 
 interface ExecutionStep {
-  node: ZFNode;
+  node: NodeDefinition;
   choice?: string;
   timestamp: Date;
 }
@@ -153,12 +153,12 @@ Notes:
 
 ```typescript
 interface FormatParser {
-  parse(input: string): ZFFlow;
+  parse(input: string): FlowDefinition;
   validate(input: string): ValidationResult;
 }
 
 class MermaidParser implements FormatParser {
-  parse(mermaidCode: string): ZFFlow;
+  parse(mermaidCode: string): FlowDefinition;
   validate(mermaidCode: string): ValidationResult;
 }
 ```
@@ -171,9 +171,9 @@ Main component for rendering interactive flowcharts.
 
 ```typescript
 interface FlowPlayerProps {
-  flowchart: ZFFlow;
+  flowchart: FlowDefinition;
   onComplete?: (history: ExecutionStep[]) => void;
-  onNodeChange?: (node: ZFNode) => void;
+  onNodeChange?: (node: NodeDefinition) => void;
   theme?: Theme;
   className?: string;
 }
@@ -187,7 +187,7 @@ Customizable node display component.
 
 ```typescript
 interface NodeRendererProps {
-  node: ZFNode;
+  node: NodeDefinition;
   choices: Choice[];
   onChoice: (choiceId: string) => void;
   canGoBack: boolean;
@@ -201,8 +201,8 @@ export const NodeRenderer: React.FC<NodeRendererProps>;
 
 ```typescript
 // Core execution hook
-function useFlowchartEngine(flowchart: ZFFlow): {
-  currentNode: ZFNode | null;
+function useFlowchartEngine(flowchart: FlowDefinition): {
+  currentNode: NodeDefinition | null;
   choices: Choice[];
   isComplete: boolean;
   makeChoice: (choiceId: string) => void;

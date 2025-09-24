@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { ZFFlow, ExecutionStep } from '@zflo/core';
+import type { FlowDefinition, ExecutionStep } from '@zflo/core';
 import { convertFlowToReactFlow, getTraversedPath } from '../utils/flow-layout';
 import type { FlowVizNode, FlowVizEdge } from '../types/flowviz-types';
 import type { DagreLayoutOptions } from '../utils/dagre-layout';
@@ -17,10 +17,10 @@ export interface UseFlowVizReturn {
 }
 
 /**
- * Hook to convert ZFFlow to React Flow format with visualization enhancements
+ * Hook to convert ZFlo FlowDefinition to React Flow format with visualization enhancements
  */
 export function useFlowViz(
-  flow: ZFFlow,
+  flow: FlowDefinition,
   currentNodeId?: string,
   history: ExecutionStep[] = [],
   options: UseFlowVizOptions = {}

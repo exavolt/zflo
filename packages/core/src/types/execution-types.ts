@@ -191,35 +191,3 @@ export interface IStateManager<
   off(event: string, listener: (...args: unknown[]) => void): this;
   emit(event: string, ...args: unknown[]): boolean;
 }
-
-// ===== LEGACY TYPE ALIASES (for gradual migration) =====
-// TODO: Remove these once all consumers are updated
-
-/** @deprecated Use ExecutionContext instead */
-export interface ExecutionResult<
-  TState extends object = Record<string, unknown>,
-> {
-  node: AnnotatedNode;
-  choices: Choice[];
-  isComplete: boolean;
-  canGoBack: boolean;
-  autoAdvanced?: boolean;
-  state: TState;
-}
-
-/** @deprecated Use RuntimeChoice instead */
-export interface Choice {
-  id: string;
-  label: string;
-  description?: string;
-  outletId: string;
-  disabled?: boolean;
-  disabledReason?: string;
-  metadata?: Record<string, unknown>;
-}
-
-/** @deprecated Use RuntimeNode instead */
-export interface AnnotatedNode {
-  node: NodeDefinition;
-  type: NodeType;
-}

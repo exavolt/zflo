@@ -1,8 +1,8 @@
 import { useEffect, useCallback } from 'react';
-import type { Choice } from '@zflo/core';
+import type { RuntimeChoice } from '@zflo/core';
 
 export interface UseFlowchartKeyboardOptions {
-  choices: Choice[];
+  choices: RuntimeChoice[];
   onChoice: (choiceId: string) => void;
   onGoBack?: () => void;
   canGoBack?: boolean;
@@ -22,9 +22,9 @@ export function useFlowchartKeyboard({
 
       if (event.key >= '1' && event.key <= '9') {
         const choiceIndex = parseInt(event.key) - 1;
-        if (choiceIndex < choices.length && !choices[choiceIndex]?.disabled) {
+        if (choiceIndex < choices.length && choices[choiceIndex]?.isEnabled) {
           event.preventDefault();
-          onChoice(choices[choiceIndex]!.id);
+          onChoice(choices[choiceIndex]!.outletId);
         }
         return;
       }
@@ -75,11 +75,11 @@ export function useFlowchartKeyboard({
   }, [handleKeyDown]);
 
   return {
-    getChoiceProps: (choice: Choice, index: number) => ({
+    getChoiceProps: (choice: RuntimeChoice, index: number) => ({
       'data-choice-button': true,
       'aria-label': `Choice ${index + 1}: ${choice.label}${choice.description ? ` - ${choice.description}` : ''}`,
-      'aria-disabled': choice.disabled,
-      tabIndex: choice.disabled ? -1 : 0,
+      'aria-disabled': !choice.isEnabled,
+      tabIndex: choice.isEnabled ? 0 : -1,
     }),
   };
 }

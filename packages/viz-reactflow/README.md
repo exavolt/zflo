@@ -102,7 +102,7 @@ function CustomFlowVisualization() {
 
 | Prop                   | Type                       | Default | Description                                       |
 | ---------------------- | -------------------------- | ------- | ------------------------------------------------- |
-| `flow`                 | `ZFFlow`                   | -       | The ZFlo flow to visualize                        |
+| `flow`                 | `FlowDefinition`           | -       | The ZFlo flow to visualize                        |
 | `currentNodeId`        | `string`                   | -       | ID of the currently active node                   |
 | `history`              | `ExecutionStep[]`          | `[]`    | Execution history for traversal indicators        |
 | `onNodeClick`          | `(nodeId: string) => void` | -       | Callback when a node is clicked                   |
@@ -116,7 +116,7 @@ function CustomFlowVisualization() {
 
 ```tsx
 function useFlowViz(
-  flow: ZFFlow,
+  flow: FlowDefinition,
   currentNodeId?: string,
   history?: ExecutionStep[],
   options?: UseFlowVizOptions

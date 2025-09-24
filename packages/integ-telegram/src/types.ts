@@ -1,15 +1,15 @@
 import {
-  ZFFlow,
   EngineOptions,
-  Choice,
   ExecutionStep,
-  AnnotatedNode,
   FlowEngine,
+  RuntimeNode,
+  RuntimeChoice,
+  FlowDefinition,
 } from '@zflo/core';
 
 export interface TelegramBotOptions {
   token: string;
-  flow: ZFFlow;
+  flow: FlowDefinition;
   engineOptions?: EngineOptions;
   welcomeMessage?: string;
   errorMessage?: string;
@@ -23,8 +23,8 @@ export interface TelegramBotSession {
   userId: number;
   username?: string;
   engine: FlowEngine; // Each session has its own engine instance
-  currentNode: AnnotatedNode | null;
-  choices: Choice[];
+  currentNode: RuntimeNode | null;
+  choices: RuntimeChoice[];
   isComplete: boolean;
   canGoBack: boolean;
   state: Record<string, unknown>;

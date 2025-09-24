@@ -7,7 +7,7 @@ The core engine uses a normalized JSON format that represents flowcharts as dire
 ### Schema
 
 ```typescript
-interface ZFFlow {
+interface FlowDefinition {
   id: string;
   title: string;
   description?: string;
@@ -17,16 +17,16 @@ interface ZFFlow {
   stateRules?: StateRule[]; // optional rule engine
   autoAdvance?: 'always' | 'default' | 'never';
   metadata?: Record<string, unknown>;
-  nodes: ZFNode[];
+  nodes: NodeDefinition[];
   startNodeId: string;
 }
 
-interface ZFNode {
+interface NodeDefinition {
   id: string;
   title: string;
   content?: string; // supports ${...} interpolation
   actions?: StateAction[]; // executed on node enter
-  outlets?: XFOutlet[]; // edges
+  outlets?: OutletDefinition[]; // edges
   autoAdvance?: 'always' | 'default' | 'never';
   metadata?: Record<string, unknown>;
 }

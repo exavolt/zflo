@@ -5,7 +5,7 @@ import {
   ValidationResult,
   ValidationWarning,
 } from '../types/analysis-types';
-import { NodeType, ZFFlow } from '../types/flow-types';
+import { NodeType, FlowDefinition } from '../types/flow-types';
 import { FlowGraphUtils } from '../utils/graph-utils';
 import { inferNodeTypes } from '../utils/infer-node-types';
 import { FlowValidator } from './flow-validator';
@@ -72,7 +72,7 @@ export interface FlowAnalysis {
 }
 
 interface AnalysisContext {
-  flow: ZFFlow;
+  flow: FlowDefinition;
   nodeTypes: Record<string, NodeType>;
   insights: AnalysisInsight[];
   graphUtils: FlowGraphUtils;
@@ -86,7 +86,7 @@ export class FlowAnalyzer {
     this.validator = new FlowValidator();
   }
 
-  async analyze(flow: ZFFlow): Promise<FlowAnalysis> {
+  async analyze(flow: FlowDefinition): Promise<FlowAnalysis> {
     const insights: AnalysisInsight[] = [];
     const nodeTypes = inferNodeTypes(flow.nodes);
     const graphUtils = new FlowGraphUtils(flow);
@@ -467,7 +467,7 @@ export class FlowAnalyzer {
   }
 
   private analyzeContent(
-    flow: ZFFlow,
+    flow: FlowDefinition,
     insights: AnalysisInsight[]
   ): ContentAnalysis {
     const nodes = flow.nodes;

@@ -12,9 +12,9 @@ export { useFlowchartKeyboard } from './hooks/use-flowchart-keyboard';
 
 // Re-export types for convenience
 export type {
-  ZFFlow,
-  ZFNode,
-  Choice,
+  FlowDefinition,
+  NodeDefinition,
+  RuntimeChoice,
   ExecutionStep,
   EngineOptions,
 } from '@zflo/core';

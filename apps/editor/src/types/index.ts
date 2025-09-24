@@ -1,4 +1,4 @@
-import type { StateAction, XFFlowMetadata } from '@zflo/core';
+import type { StateAction, FlowMetadata } from '@zflo/core';
 import { Node, Edge } from '@xyflow/react';
 
 export interface NodeData {
@@ -23,5 +23,5 @@ export interface EditorData {
   flowTitle: string;
   nodeIdCounter: number;
   edgeIdCounter: number;
-  flowMetadata: XFFlowMetadata;
+  flowMetadata: FlowMetadata;
 }

@@ -12,7 +12,7 @@ This pattern frees the user from being restricted to a fixed set of buttons for 
 
 **How It Works**:
 
-1.  A `ZFNode` is marked with a special property, e.g., `"inputMode": "naturalLanguage"`.
+1.  A `NodeDefinition` is marked with a special property, e.g., `"inputMode": "naturalLanguage"`.
 2.  When the `FlowEngine` enters this node, the UI presents a text input field instead of buttons.
 3.  The user types their response (e.g., "I guess I'll check out the forest first").
 4.  The application sends the user's text and the list of available choices (e.g., `["Explore the forest", "Go to the village"]`) to an AI model.
@@ -76,7 +76,7 @@ This is the most advanced pattern, where the AI is given the power to modify the
 
 **How It Works**:
 
-1.  A `ZFNode` contains a prompt instead of predefined outlets, e.g., `"dynamicOutletPrompt": "The user wants to troubleshoot their slow internet. Generate three logical next steps as choices."`
+1.  A `NodeDefinition` contains a prompt instead of predefined outlets, e.g., `"dynamicOutletPrompt": "The user wants to troubleshoot their slow internet. Generate three logical next steps as choices."`
 2.  The `FlowEngine` sends this prompt to an AI model.
 3.  The AI generates a list of choices (e.g., `["Restart the router", "Check for outages", "Run a speed test"]`).
 4.  Crucially, the AI could also generate the basic nodes that these choices should lead to.
@@ -93,12 +93,12 @@ This is the most advanced pattern, where the AI is given the power to modify the
 
 This pattern uses AI as a development assistant to improve the quality of the flows themselves.
 
-**Concept**: An AI analyzes a `ZFFlow` graph definition to identify potential design flaws, suggest improvements, or refactor the logic.
+**Concept**: An AI analyzes a `FlowDefinition` graph definition to identify potential design flaws, suggest improvements, or refactor the logic.
 
 **How It Works**:
 
 1.  From within an editor, a designer can trigger an "AI Analysis" action.
-2.  The entire `ZFFlow` JSON is sent to an AI model.
+2.  The entire `FlowDefinition` JSON is sent to an AI model.
 3.  The AI is prompted to act as an expert narrative or systems designer and look for issues like:
     - Dead-end branches or unreachable nodes.
     - Confusing or overly similar choices.

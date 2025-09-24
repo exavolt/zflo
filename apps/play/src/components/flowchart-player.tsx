@@ -8,7 +8,7 @@ import {
   Image,
 } from 'lucide-react';
 import { zfloToMermaid } from '@zflo/format-mermaid';
-import { ZFFlow, ZFNode } from '@zflo/core';
+import { FlowDefinition, NodeDefinition } from '@zflo/core';
 import { RegistryParser } from '../lib/registry-parser';
 import { flowchartExamples } from '@/data/flowcharts';
 import { Textarea } from './ui/textarea';
@@ -35,7 +35,7 @@ import { useAppInfo } from '@/contexts/app-info';
 interface FlowchartPlayerProps {
   value: string;
   onChange: (value: string) => void;
-  onPlay: (flowchart: ZFFlow, showFlowchart?: boolean) => void;
+  onPlay: (flow: FlowDefinition, showFlowchart?: boolean) => void;
   theme: 'light' | 'dark';
 }
 
@@ -93,7 +93,7 @@ export const FlowchartPlayer: React.FC<FlowchartPlayerProps> = ({
 
       // Debug: log decision nodes specifically
       const decisionNodes = flowchart.nodes.filter(
-        (n: ZFNode) => n.outlets && n.outlets.length > 1
+        (n: NodeDefinition) => n.outlets && n.outlets.length > 1
       );
       console.log('Decision nodes:', decisionNodes);
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router';
-import { ZFFlow } from '@zflo/core';
+import { FlowDefinition } from '@zflo/core';
 import { Moon, Sun, FileText, Sparkles, Globe, Github } from 'lucide-react';
 import { FlowchartPlayer } from './components/flowchart-player';
 import { SharedFlows } from './components/shared-flows';
@@ -36,14 +36,14 @@ function App() {
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
-  const [currentFlowchart, setCurrentFlowchart] = useState<ZFFlow | null>(null);
+  const [currentFlow, setCurrentFlow] = useState<FlowDefinition | null>(null);
   const [showFlowchart, setShowFlowchart] = useState(false);
   const [enableTypingAnimation, setEnableTypingAnimation] = useState(false);
 
-  const handlePlayCustom = (flowchart: ZFFlow, showFlowchart?: boolean) => {
+  const handlePlayCustom = (flow: FlowDefinition, showFlowchart?: boolean) => {
     setEnableTypingAnimation(false);
     setShowFlowchart(!!showFlowchart);
-    setCurrentFlowchart(flowchart);
+    setCurrentFlow(flow);
     setIsPlayerOpen(true);
   };
 
@@ -123,13 +123,13 @@ function App() {
           <DialogContent className="w-[90vw] sm:max-w-[90vw] h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {currentFlowchart?.title || 'Flowchart Player'}
+                {currentFlow?.title || 'Flowchart Player'}
               </DialogTitle>
             </DialogHeader>
             <div className="h-full">
-              {currentFlowchart && (
+              {currentFlow && (
                 <IntegratedFlowPlayer
-                  flowchart={currentFlowchart}
+                  flow={currentFlow}
                   showFlowchart={showFlowchart}
                   onComplete={handleComplete}
                   enableTypingAnimation={enableTypingAnimation}

@@ -11,9 +11,9 @@ export { useTypingAnimation } from './hooks/use-typing-animation';
 
 // Re-export core types for convenience
 export type {
-  ZFFlow,
-  ZFNode,
-  Choice,
+  FlowDefinition,
+  NodeDefinition,
+  RuntimeChoice,
   ExecutionStep,
   EngineOptions,
 } from '@zflo/core';

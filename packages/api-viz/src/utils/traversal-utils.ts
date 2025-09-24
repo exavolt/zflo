@@ -1,4 +1,4 @@
-import type { ZFFlow, ExecutionStep } from '../../../core/dist';
+import type { FlowDefinition, ExecutionStep } from '@zflo/core';
 
 /**
  * Determines if a node has been traversed based on execution history
@@ -10,7 +10,7 @@ export function isNodeTraversed(
   nodeId: string,
   history: ExecutionStep[] = []
 ): boolean {
-  return history.some((step) => step.node?.node?.id === nodeId);
+  return history.some((step) => step.nodeId === nodeId);
 }
 
 /**
@@ -27,8 +27,8 @@ export function isEdgeTraversed(
 ): boolean {
   // Find if there's a sequence where sourceId is followed by targetId
   for (let i = 0; i < history.length - 1; i++) {
-    const currentNodeId = history[i]?.node?.node?.id;
-    const nextNodeId = history[i + 1]?.node?.node?.id;
+    const currentNodeId = history[i]?.nodeId;
+    const nextNodeId = history[i + 1]?.nodeId;
     if (currentNodeId === sourceId && nextNodeId === targetId) {
       return true;
     }
@@ -43,7 +43,7 @@ export function isEdgeTraversed(
  */
 export function getTraversedNodes(history: ExecutionStep[] = []): Set<string> {
   return new Set(
-    history.map((step) => step.node?.node?.id).filter(Boolean) as string[]
+    history.map((step) => step.nodeId).filter(Boolean) as string[]
   );
 }
 
@@ -58,8 +58,8 @@ export function getTraversedEdges(
   const edges: Array<[string, string]> = [];
 
   for (let i = 0; i < history.length - 1; i++) {
-    const currentNodeId = history[i]?.node?.node?.id;
-    const nextNodeId = history[i + 1]?.node?.node?.id;
+    const currentNodeId = history[i]?.nodeId;
+    const nextNodeId = history[i + 1]?.nodeId;
     if (currentNodeId && nextNodeId) {
       edges.push([currentNodeId, nextNodeId]);
     }
@@ -74,7 +74,10 @@ export function getTraversedEdges(
  * @param currentNodeId - Current node ID
  * @returns Array of next node IDs
  */
-export function getNextNodes(flow: ZFFlow, currentNodeId?: string): string[] {
+export function getNextNodes(
+  flow: FlowDefinition,
+  currentNodeId?: string
+): string[] {
   if (!currentNodeId) return [];
 
   const currentNode = flow.nodes.find((node) => node.id === currentNodeId);
@@ -90,7 +93,7 @@ export function getNextNodes(flow: ZFFlow, currentNodeId?: string): string[] {
  * @returns Array of previous node IDs
  */
 export function getPreviousNodes(
-  flow: ZFFlow,
+  flow: FlowDefinition,
   currentNodeId?: string
 ): string[] {
   if (!currentNodeId) return [];

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router';
-import { ZFFlow } from '@zflo/core';
+import { FlowDefinition } from '@zflo/core';
 import { getSharedFlow, type SharedFlow } from '@zflo/platform-core';
 import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
 import { IntegratedFlowPlayer } from '../components/integrated-flow-player';
@@ -120,7 +120,7 @@ export function FlowPlayerPage() {
       <main className="max-w-7xl mx-auto p-4 h-[calc(100vh-80px)]">
         {flow.flow_data ? (
           <IntegratedFlowPlayer
-            flowchart={flow.flow_data as unknown as ZFFlow}
+            flow={flow.flow_data as unknown as FlowDefinition}
             showFlowchart={showFlowchart}
             enableTypingAnimation={enableTypingAnimation}
           />

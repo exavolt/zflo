@@ -5,8 +5,8 @@ ZFlo JSON format support for ZFlo. This package provides parsing, formatting, an
 ## Features
 
 - 🔍 **Auto-Detection**: Automatically detects ZFlo JSON format with high confidence
-- 📝 **Parsing**: Converts ZFlo JSON to ZFFlow objects with validation
-- 🎨 **Formatting**: Converts ZFFlow objects back to clean ZFlo JSON
+- 📝 **Parsing**: Converts ZFlo JSON to FlowDefinition objects with validation
+- 🎨 **Formatting**: Converts FlowDefinition objects back to clean ZFlo JSON
 - ✅ **Validation**: Comprehensive validation with detailed error messages
 - 🔧 **Auto-Registration**: Automatically registers with the format registry
 
@@ -112,7 +112,7 @@ Each node must have:
 
 ```typescript
 class ZFloJsonParser implements FormatParser {
-  parse(code: string, options?: Record<string, unknown>): ZFFlow;
+  parse(code: string, options?: Record<string, unknown>): FlowDefinition;
   validate(code: string): ValidationResult;
 }
 ```
@@ -122,7 +122,7 @@ class ZFloJsonParser implements FormatParser {
 ```typescript
 class ZFloJsonFormatter implements FormatFormatter {
   format(
-    flow: ZFFlow,
+    flow: FlowDefinition,
     options?: {
       indent?: number;
       sortKeys?: boolean;

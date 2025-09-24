@@ -23,9 +23,9 @@ npm install @zflo/integ-telegram
 
 ```typescript
 import { TelegramFlowBot } from '@zflo/integ-telegram';
-import { ZFFlow } from '@zflo/core';
+import { FlowDefinition } from '@zflo/core';
 
-const flow: ZFFlow = {
+const flow: FlowDefinition = {
   // Your flow definition
 };
 

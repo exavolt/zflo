@@ -1,4 +1,4 @@
-import { ZFFlow, ZFNode } from '@zflo/core';
+import { FlowDefinition, NodeDefinition } from '@zflo/core';
 import { FormatParser } from '@zflo/api-format';
 
 interface PlantUMLNode {
@@ -53,7 +53,10 @@ interface ParsingContext {
 export class PlantUMLParser implements FormatParser<Record<string, unknown>> {
   private nodeCounter = 0;
 
-  parse(plantUMLCode: string, _options?: Record<string, unknown>): ZFFlow {
+  parse(
+    plantUMLCode: string,
+    _options?: Record<string, unknown>
+  ): FlowDefinition {
     try {
       // Validate basic PlantUML structure
       if (
@@ -573,13 +576,13 @@ export class PlantUMLParser implements FormatParser<Record<string, unknown>> {
     return `${type}_${++this.nodeCounter}`;
   }
 
-  private convertToZFlo(ast: PlantUMLAST, title?: string): ZFFlow {
-    const nodes: ZFNode[] = ast.nodes.map((node): ZFNode => {
+  private convertToZFlo(ast: PlantUMLAST, title?: string): FlowDefinition {
+    const nodes: NodeDefinition[] = ast.nodes.map((node): NodeDefinition => {
       return {
         id: node.id,
         title: node.text,
         content: node.content || node.text,
-        isAutoAdvance: false,
+        autoAdvance: false,
         outlets: ast.edges
           .filter((edge) => edge.from === node.id)
           .map((edge, index) => ({
@@ -599,7 +602,7 @@ export class PlantUMLParser implements FormatParser<Record<string, unknown>> {
       title: title || 'PlantUML Activity Diagram',
       nodes,
       startNodeId,
-      globalState: {},
+      initialState: {},
       metadata: {
         originalTitle: title,
         format: 'plantuml',

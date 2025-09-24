@@ -1,10 +1,10 @@
 import {
   inferNodeTypes,
   NodeType,
-  ZFFlow,
-  ZFNode,
-  XFOutlet,
   ExecutionStep,
+  FlowDefinition,
+  NodeDefinition,
+  OutletDefinition,
 } from '@zflo/core';
 
 export interface ExecutionHighlight {
@@ -19,26 +19,26 @@ export interface ExecutionHighlight {
  * Optionally highlights execution path and current node
  */
 export function zfloToMermaid(
-  flowchart: ZFFlow,
+  flow: FlowDefinition,
   executionState?: ExecutionHighlight
 ): string {
   const lines: string[] = [];
 
   // Add YAML front-matter if title/description exist
-  if (flowchart.title || flowchart.description) {
+  if (flow.title || flow.description) {
     lines.push('---');
-    if (flowchart.title) {
+    if (flow.title) {
       // Escape quotes in title
-      const title = flowchart.title.includes(':')
-        ? `"${flowchart.title.replace(/"/g, '\\"')}"`
-        : flowchart.title;
+      const title = flow.title.includes(':')
+        ? `"${flow.title.replace(/"/g, '\\"')}"`
+        : flow.title;
       lines.push(`title: ${title}`);
     }
-    if (flowchart.description) {
+    if (flow.description) {
       // Escape quotes in description
-      const description = flowchart.description.includes(':')
-        ? `"${flowchart.description.replace(/"/g, '\\"')}"`
-        : flowchart.description;
+      const description = flow.description.includes(':')
+        ? `"${flow.description.replace(/"/g, '\\"')}"`
+        : flow.description;
       lines.push(`description: ${description}`);
     }
     lines.push('---');
@@ -50,7 +50,7 @@ export function zfloToMermaid(
   // Extract execution information
   const executionPath =
     executionState?.executionPath ||
-    executionState?.history?.map((step) => step.node.node.id) ||
+    executionState?.history?.map((step) => step.nodeId) ||
     [];
   const currentNodeId = executionState?.currentNodeId;
 
@@ -63,9 +63,9 @@ export function zfloToMermaid(
     for (let i = 0; i < executionState.history.length - 1; i++) {
       const currentStep = executionState.history[i];
       const nextStep = executionState.history[i + 1];
-      if (currentStep?.node?.node?.id && nextStep?.node?.node?.id) {
-        const fromId = currentStep.node.node.id;
-        const toId = nextStep.node.node.id;
+      if (currentStep?.nodeId && nextStep?.nodeId) {
+        const fromId = currentStep.nodeId;
+        const toId = nextStep.nodeId;
         executedEdges.add(`${fromId}->${toId}`);
       }
     }
@@ -73,9 +73,9 @@ export function zfloToMermaid(
 
   // Process nodes and create edges
   const processedNodes = new Set<string>();
-  const nodeTypes = inferNodeTypes(flowchart.nodes);
+  const nodeTypes = inferNodeTypes(flow.nodes);
 
-  flowchart.nodes.forEach((node: ZFNode) => {
+  flow.nodes.forEach((node: NodeDefinition) => {
     // Add node definition if not already processed
     if (!processedNodes.has(node.id)) {
       const nodeDefinition = createNodeDefinition(node, nodeTypes);
@@ -87,9 +87,9 @@ export function zfloToMermaid(
 
     // Add edges from this node
     if (node.outlets) {
-      node.outlets.forEach((path: XFOutlet) => {
-        const targetNode = flowchart.nodes.find(
-          (n: ZFNode) => n.id === path.to
+      node.outlets.forEach((path: OutletDefinition) => {
+        const targetNode = flow.nodes.find(
+          (n: NodeDefinition) => n.id === path.to
         );
         if (targetNode) {
           // Ensure target node is defined
@@ -144,7 +144,7 @@ export function zfloToMermaid(
 }
 
 function createNodeDefinition(
-  node: ZFNode,
+  node: NodeDefinition,
   nodeTypes: Record<string, NodeType>
 ): string | null {
   const nodeId = sanitizeNodeId(node.id);
@@ -152,7 +152,8 @@ function createNodeDefinition(
 
   // Check if node has conditional paths
   const hasConditionalPaths =
-    node.outlets && node.outlets.some((path: XFOutlet) => path.condition);
+    node.outlets &&
+    node.outlets.some((path: OutletDefinition) => path.condition);
   const hasEvaluations = hasConditionalPaths;
 
   // Choose shape based on node type and evaluations
@@ -160,7 +161,7 @@ function createNodeDefinition(
     case 'start':
       return `${nodeId}([${nodeText}])`;
     case 'decision':
-      if (node.isAutoAdvance) {
+      if (node.autoAdvance) {
         return `${nodeId}{{${nodeText}}}`;
       }
       return `${nodeId}{${nodeText}}`;

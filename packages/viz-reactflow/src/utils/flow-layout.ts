@@ -1,13 +1,13 @@
-import { type ZFFlow, type ExecutionStep, inferNodeTypes } from '@zflo/core';
+import { type ExecutionStep, inferNodeTypes, FlowDefinition } from '@zflo/core';
 import type { FlowVizNode, FlowVizEdge } from '../types/flowviz-types';
 import { truncateContent, calculateNodeDimensions } from './content-truncation';
 import { applyDagreLayout, type DagreLayoutOptions } from './dagre-layout';
 
 /**
- * Converts ZFFlow to React Flow nodes and edges
+ * Converts ZFlo FlowDefinition to React Flow nodes and edges
  */
 export function convertFlowToReactFlow(
-  flow: ZFFlow,
+  flow: FlowDefinition,
   currentNodeId?: string,
   history: ExecutionStep[] = [],
   maxContentLength: number = 100,
@@ -17,7 +17,7 @@ export function convertFlowToReactFlow(
     rankSpacing: 200,
   }
 ): { nodes: FlowVizNode[]; edges: FlowVizEdge[] } {
-  const traversedNodeIds = new Set(history.map((step) => step.node.node.id));
+  const traversedNodeIds = new Set(history.map((step) => step.nodeId));
   const traversedEdges = new Set<string>();
 
   // Build traversed edges from history
@@ -25,7 +25,7 @@ export function convertFlowToReactFlow(
     const currentStep = history[i];
     const nextStep = history[i + 1];
     if (currentStep && nextStep) {
-      const edgeId = `${currentStep.node.node.id}-${nextStep?.node.node.id}`;
+      const edgeId = `${currentStep.nodeId}-${nextStep?.nodeId}`;
       traversedEdges.add(edgeId);
     }
   }
@@ -99,12 +99,12 @@ export function getTraversedPath(history: ExecutionStep[]): {
   const edgeIds = new Set<string>();
 
   history.forEach((step, index) => {
-    nodeIds.add(step.node.node.id);
+    nodeIds.add(step.nodeId);
 
-    if (index < history.length - 1 && step.choice) {
+    if (index < history.length - 1 && step.choiceId) {
       const nextStep = history[index + 1];
       if (nextStep) {
-        const edgeId = `${step.node.node.id}-${nextStep.node.node.id}`;
+        const edgeId = `${step.nodeId}-${nextStep.nodeId}`;
         edgeIds.add(edgeId);
       }
     }

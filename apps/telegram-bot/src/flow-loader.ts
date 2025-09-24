@@ -1,5 +1,5 @@
 import { readFile } from 'fs/promises';
-import { ZFFlow } from '@zflo/core';
+import { FlowDefinition } from '@zflo/core';
 import {
   getFormatRegistry,
   createFormatImplementation,
@@ -46,7 +46,7 @@ export class FlowLoader {
   /**
    * Load and parse a flow file from disk
    */
-  async loadFlow(filePath: string): Promise<ZFFlow> {
+  async loadFlow(filePath: string): Promise<FlowDefinition> {
     try {
       const content = await readFile(filePath, 'utf-8');
       return this.parseFlow(content, filePath);
@@ -67,7 +67,7 @@ export class FlowLoader {
   /**
    * Parse flow content using the format registry
    */
-  private parseFlow(content: string, filePath: string): ZFFlow {
+  private parseFlow(content: string, filePath: string): FlowDefinition {
     const result = this.registry.parse(content);
 
     if (!result.success) {

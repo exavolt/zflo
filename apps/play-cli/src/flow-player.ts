@@ -1,8 +1,8 @@
 import {
   FlowEngine,
-  type ZFFlow,
-  type AnnotatedNode,
-  type Choice,
+  type FlowDefinition,
+  type RuntimeNode,
+  type RuntimeChoice,
 } from '@zflo/core';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
@@ -16,7 +16,7 @@ export class FlowPlayer {
   private engine: FlowEngine;
   private options: FlowPlayerOptions;
 
-  constructor(flow: ZFFlow, options: FlowPlayerOptions = {}) {
+  constructor(flow: FlowDefinition, options: FlowPlayerOptions = {}) {
     this.engine = new FlowEngine(flow);
     this.options = {
       verbose: false,
@@ -41,8 +41,9 @@ export class FlowPlayer {
 
   private async gameLoop(): Promise<void> {
     while (true) {
-      const currentNode = this.engine.getCurrentNode();
-      const choices = this.engine.getAvailableChoices();
+      const currentContext = this.engine.getCurrentContext();
+      const currentNode = currentContext?.currentNode;
+      const choices = currentContext?.availableChoices || [];
 
       if (!currentNode) {
         this.printError('No current node found');
@@ -71,7 +72,7 @@ export class FlowPlayer {
         // For decision nodes, always prompt
         const selectedChoice = await this.promptForChoice(choices);
         if (selectedChoice) {
-          await this.engine.next(selectedChoice.id);
+          await this.engine.next(selectedChoice.outletId);
         } else {
           this.printInfo('Exiting...');
           break;
@@ -80,7 +81,7 @@ export class FlowPlayer {
         // Multiple choices - let user select
         const selectedChoice = await this.promptForChoice(choices);
         if (selectedChoice) {
-          await this.engine.next(selectedChoice.id);
+          await this.engine.next(selectedChoice.outletId);
         } else {
           this.printInfo('Exiting...');
           break;
@@ -94,25 +95,25 @@ export class FlowPlayer {
     this.printCompletion();
   }
 
-  private displayNode(node: AnnotatedNode): void {
+  private displayNode(node: RuntimeNode): void {
     const { useColor } = this.options;
 
     // Node title
-    if (node.node.title) {
+    if (node.definition.title) {
       const title = useColor
-        ? chalk.bold.cyan(node.node.title)
-        : node.node.title;
+        ? chalk.bold.cyan(node.definition.title)
+        : node.definition.title;
       console.log(`\n${title}`);
       console.log(
         useColor
-          ? chalk.gray('─'.repeat(node.node.title.length))
-          : '─'.repeat(node.node.title.length)
+          ? chalk.gray('─'.repeat(node.definition.title.length))
+          : '─'.repeat(node.definition.title.length)
       );
     }
 
     // Node content
-    if (node.node.content) {
-      const content = this.processContent(node.node.content);
+    if (node.definition.content) {
+      const content = this.processContent(node.definition.content);
       console.log(`\n${content}`);
     }
 
@@ -126,13 +127,15 @@ export class FlowPlayer {
     }
   }
 
-  private async promptForChoice(choices: Choice[]): Promise<Choice | null> {
+  private async promptForChoice(
+    choices: RuntimeChoice[]
+  ): Promise<RuntimeChoice | null> {
     const { useColor } = this.options;
 
     // Format choices for inquirer
     const choiceOptions: Array<{
       name: string;
-      value: Choice | null;
+      value: RuntimeChoice | null;
       short: string;
     }> = choices.map((choice, index) => ({
       name: `${index + 1}. ${choice.label}`,
@@ -170,6 +173,7 @@ export class FlowPlayer {
   }
 
   private processContent(content: string): string {
+    // TODO: interpolation/templating
     // Process any content interpolation or formatting
     // For now, just return as-is, but could add markdown rendering, etc.
     return content;

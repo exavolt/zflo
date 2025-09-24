@@ -5,30 +5,40 @@ import { ExpressionLanguage } from './expression-types';
 
 // ===== DEFINITION TYPES (Immutable, Serializable) =====
 
-/**
- * Complete flow definition - immutable blueprint of a flow
- */
-export interface FlowDefinition<
-  TState extends object = Record<string, unknown>,
-> {
+export interface FlowMetadataBase {
   id: string;
   title: string;
   description?: string;
   version?: string;
   metadata?: Record<string, unknown>;
+}
 
-  // Flow structure
-  nodes: NodeDefinition[];
-  startNodeId: string;
-
-  // State configuration
+export interface FlowStateConfiguration<
+  TState extends object = Record<string, unknown>,
+> {
   initialState?: TState;
   stateSchema?: JSONSchema7;
   stateRules?: StateRule[];
+}
 
-  // Execution configuration
+export interface FlowExecutionConfiguration {
   expressionLanguage?: ExpressionLanguage;
   autoAdvanceMode?: AutoAdvanceMode;
+}
+
+export interface FlowMetadata<TState extends object = Record<string, unknown>>
+  extends FlowMetadataBase,
+    FlowStateConfiguration<TState>,
+    FlowExecutionConfiguration {}
+
+/**
+ * Complete flow definition - immutable blueprint of a flow
+ */
+export interface FlowDefinition<TState extends object = Record<string, unknown>>
+  extends FlowMetadata<TState> {
+  // Flow structure
+  nodes: NodeDefinition[];
+  startNodeId: string;
 }
 
 /**
@@ -79,20 +89,3 @@ export interface StateRule {
   target?: string;
   value?: unknown;
 }
-
-// ===== LEGACY TYPE ALIASES (for gradual migration) =====
-// TODO: Remove these once all consumers are updated
-
-/** @deprecated Use FlowDefinition instead */
-export type ZFFlow<TState extends object = Record<string, unknown>> =
-  FlowDefinition<TState>;
-
-/** @deprecated Use NodeDefinition instead */
-export type ZFNode = NodeDefinition;
-
-/** @deprecated Use OutletDefinition instead */
-export type XFOutlet = OutletDefinition;
-
-/** @deprecated Use FlowDefinition instead */
-export type XFFlowMetadata<TState extends object = Record<string, unknown>> =
-  Omit<FlowDefinition<TState>, 'nodes' | 'startNodeId'>;

@@ -8,9 +8,9 @@ export { cn } from './lib/utils';
 
 // Re-export types from headless components
 export type {
-  ZFFlow,
-  ZFNode,
-  Choice,
+  FlowDefinition,
+  NodeDefinition,
+  RuntimeChoice,
   ExecutionStep,
   EngineOptions,
 } from '@zflo/react';

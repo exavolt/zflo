@@ -1,12 +1,12 @@
 import React, { memo, useMemo, useCallback } from 'react';
-import type { AnnotatedNode, Choice } from '@zflo/core';
+import type { RuntimeNode, RuntimeChoice } from '@zflo/core';
 import { StateDisplay } from './state-display';
 import { useFlowchartKeyboard } from '../hooks/use-flowchart-keyboard';
 import { useTypingAnimation } from '@zflo/react';
 
 export interface NodeRendererProps {
-  node: AnnotatedNode;
-  choices: Choice[];
+  node: RuntimeNode;
+  choices: RuntimeChoice[];
   onChoice: (choiceId: string) => void;
   canGoBack: boolean;
   onGoBack: () => void;
@@ -76,7 +76,7 @@ export const NodeRenderer: React.FC<NodeRendererProps> = memo(
     }, [showStateDisplay, state]);
 
     const { displayedText, isTyping, skipToEnd } = useTypingAnimation({
-      text: node.node.content || '',
+      text: node.definition.content || '',
       speed: typingSpeed,
       interval: typingInterval,
       enabled: enableTypingAnimation,
@@ -94,10 +94,10 @@ export const NodeRenderer: React.FC<NodeRendererProps> = memo(
       <div className={`zflo-node-renderer ${theme} ${nodeTypeClass}`}>
         <div className="zflo-node-header">
           <span className="zflo-node-icon">{nodeIcon}</span>
-          <h2 className="zflo-node-title">{node.node.title}</h2>
+          <h2 className="zflo-node-title">{node.definition.title}</h2>
         </div>
 
-        {node.node.content && (
+        {node.definition.content && (
           <div
             className="zflo-node-content"
             onClick={isTyping ? skipToEnd : undefined}
@@ -131,9 +131,9 @@ export const NodeRenderer: React.FC<NodeRendererProps> = memo(
             <div className="zflo-choice-buttons">
               {choices.map((choice, index) => (
                 <button
-                  key={choice.id}
-                  onClick={() => handleChoiceClick(choice.id)}
-                  disabled={isLoading || choice.disabled || isTyping}
+                  key={choice.outletId}
+                  onClick={() => handleChoiceClick(choice.outletId)}
+                  disabled={isLoading || !choice.isEnabled || isTyping}
                   className="zflo-choice-button"
                   title={choice.description}
                   {...getChoiceProps(choice, index)}

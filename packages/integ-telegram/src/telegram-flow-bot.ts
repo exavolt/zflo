@@ -1,4 +1,9 @@
-import { FlowEngine, ZFFlow, Choice, AnnotatedNode } from '@zflo/core';
+import {
+  FlowEngine,
+  FlowDefinition,
+  RuntimeNode,
+  RuntimeChoice,
+} from '@zflo/core';
 import { TelegramBot } from 'typescript-telegram-bot-api';
 import {
   TelegramBotOptions,
@@ -12,7 +17,7 @@ import {
 
 export class TelegramFlowBot {
   private bot: TelegramBot;
-  private flow: ZFFlow;
+  private flow: FlowDefinition;
   private sessions: Map<number, TelegramBotSession> = new Map();
   private options: TelegramBotOptions & {
     welcomeMessage: string;
@@ -214,11 +219,11 @@ export class TelegramFlowBot {
   private async startFlow(session: TelegramBotSession): Promise<void> {
     const result = await session.engine.start();
 
-    session.currentNode = result.node;
-    session.choices = result.choices;
+    session.currentNode = result.currentNode;
+    session.choices = result.availableChoices;
     session.isComplete = result.isComplete;
     session.canGoBack = result.canGoBack;
-    session.state = result.state;
+    session.state = session.engine.getState();
     session.history = session.engine.getHistory();
 
     await this.sendWelcomeMessage(session);
@@ -232,11 +237,11 @@ export class TelegramFlowBot {
   ): Promise<void> {
     const result = await session.engine.next(choiceId);
 
-    session.currentNode = result.node;
-    session.choices = result.choices;
+    session.currentNode = result.currentNode;
+    session.choices = result.availableChoices;
     session.isComplete = result.isComplete;
     session.canGoBack = result.canGoBack;
-    session.state = result.state;
+    session.state = session.engine.getState();
     session.history = session.engine.getHistory();
 
     if (session.isComplete) {
@@ -249,11 +254,11 @@ export class TelegramFlowBot {
   private async goBack(session: TelegramBotSession): Promise<void> {
     const result = await session.engine.goBack();
 
-    session.currentNode = result.node;
-    session.choices = result.choices;
+    session.currentNode = result.currentNode;
+    session.choices = result.availableChoices;
     session.isComplete = result.isComplete;
     session.canGoBack = result.canGoBack;
-    session.state = result.state;
+    session.state = session.engine.getState();
     session.history = session.engine.getHistory();
 
     await this.sendCurrentState(session);
@@ -352,7 +357,7 @@ export class TelegramFlowBot {
   private async sendStatus(session: TelegramBotSession): Promise<void> {
     const status = [
       `📊 *Flow Status*`,
-      `Node: ${session.currentNode?.node.title || 'None'}`,
+      `Node: ${session.currentNode?.definition.title || 'None'}`,
       `Complete: ${session.isComplete ? '✅' : '❌'}`,
       `Can go back: ${session.canGoBack ? '✅' : '❌'}`,
       `Choices available: ${session.choices.length}`,
@@ -374,15 +379,16 @@ export class TelegramFlowBot {
   }
 
   private formatNodeMessage(
-    node: AnnotatedNode,
+    node: RuntimeNode,
     state: Record<string, unknown>
   ): string {
-    let message = `*${node.node.title}*`;
+    let message = `*${node.definition.title}*`;
 
-    if (node.node.content) {
-      message += `\n\n${node.node.content}`;
+    if (node.definition.content) {
+      message += `\n\n${node.definition.content}`;
     }
 
+    // TODO: use interpolation/template setting
     // Replace state variables in the content
     message = this.replaceStateVariables(message, state);
 
@@ -400,18 +406,18 @@ export class TelegramFlowBot {
   }
 
   private createInlineKeyboard(
-    choices: Choice[],
+    choices: RuntimeChoice[],
     canGoBack: boolean
   ): InlineKeyboardMarkup {
     const keyboard: any[][] = [];
 
     // Add choice buttons
     for (const choice of choices) {
-      if (!choice.disabled) {
+      if (choice.isEnabled) {
         keyboard.push([
           {
             text: choice.label,
-            callback_data: choice.id,
+            callback_data: choice.outletId,
           },
         ]);
       }

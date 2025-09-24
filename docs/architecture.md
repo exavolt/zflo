@@ -215,7 +215,7 @@ interface CustomNodeType {
 interface FormatParser {
   name: string;
   extensions: string[];
-  parse: (input: string) => ZFFlow;
+  parse: (input: string) => FlowDefinition;
   validate: (input: string) => ValidationResult;
 }
 ```

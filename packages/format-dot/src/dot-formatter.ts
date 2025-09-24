@@ -1,11 +1,11 @@
-import { ZFFlow } from '@zflo/core';
+import { FlowDefinition } from '@zflo/core';
 import { FormatFormatter } from '@zflo/api-format';
 
 /**
- * DOT formatter that converts ZFFlow to Graphviz DOT format
+ * DOT formatter that converts ZFlo FlowDefinition to Graphviz DOT format
  */
 export class DotFormatter implements FormatFormatter<Record<string, unknown>> {
-  format(flow: ZFFlow, _options?: Record<string, unknown>): string {
+  format(flow: FlowDefinition, _options?: Record<string, unknown>): string {
     const graphName = this.sanitizeId(flow.title || flow.id || 'flowchart');
     const lines: string[] = [];
 

@@ -15,10 +15,10 @@ pnpm add @zflo/core
 ## Quick start (branching + state)
 
 ```ts
-import { FlowEngine, type ZFFlow } from '@zflo/core';
+import { FlowEngine, type FlowDefinition } from '@zflo/core';
 
 // Branching flow with state and CEL conditions
-const flow: ZFFlow = {
+const flow: FlowDefinition = {
   id: 'dragon-quest',
   title: 'Dragon Quest',
   startNodeId: 'start',
@@ -128,7 +128,7 @@ console.log(res.isComplete); // true
 From `src/types/flow-types.ts`:
 
 ```ts
-export interface ZFFlow {
+export interface FlowDefinition {
   id: string;
   title: string;
   description?: string;
@@ -138,21 +138,21 @@ export interface ZFFlow {
   stateRules?: StateRule[]; // optional rule engine
   autoAdvance?: 'always' | 'default' | 'never';
   metadata?: Record<string, unknown>;
-  nodes: ZFNode[];
+  nodes: NodeDefinition[];
   startNodeId: string;
 }
 
-export interface ZFNode {
+export interface NodeDefinition {
   id: string;
   title: string;
   content?: string; // supports ${...} interpolation
   actions?: StateAction[]; // executed on node enter
-  outlets?: XFOutlet[]; // edges
+  outlets?: OutletDefinition[]; // edges
   autoAdvance?: 'always' | 'default' | 'never';
   metadata?: Record<string, unknown>;
 }
 
-export interface XFOutlet {
+export interface OutletDefinition {
   id: string; // used as choiceId
   to: string; // target node id
   label?: string;

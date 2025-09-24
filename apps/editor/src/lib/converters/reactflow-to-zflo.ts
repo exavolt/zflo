@@ -1,4 +1,9 @@
-import { ZFFlow, ZFNode, XFOutlet } from '@zflo/core';
+import {
+  FlowDefinition,
+  FlowMetadata,
+  NodeDefinition,
+  OutletDefinition,
+} from '@zflo/core';
 import { v4 as uuidv4 } from 'uuid';
 import { Node, Edge } from '@xyflow/react';
 import { NodeData } from '@/types';
@@ -10,24 +15,26 @@ export function convertReactFlowToZFlo(
   nodes: Node[],
   edges: Edge[],
   flowTitle: string = 'Untitled Flow',
-  flowMetadata: Partial<ZFFlow> = {}
-): ZFFlow {
-  const zfloNodes: ZFNode[] = nodes.map((node): ZFNode => {
+  flowMetadata: FlowMetadata = { id: uuidv4(), title: flowTitle }
+): FlowDefinition {
+  const zfloNodes: NodeDefinition[] = nodes.map((node): NodeDefinition => {
     const nodeData = node.data as unknown as NodeData;
     const nodeEdges = edges.filter((edge) => edge.source === node.id);
 
-    const outlets: XFOutlet[] = nodeEdges.map((edge): XFOutlet => {
-      const outlet = nodeData.outlets?.find(
-        (o) => o.id === edge.sourceHandle || edge.sourceHandle === null
-      );
+    const outlets: OutletDefinition[] = nodeEdges.map(
+      (edge): OutletDefinition => {
+        const outlet = nodeData.outlets?.find(
+          (o) => o.id === edge.sourceHandle || edge.sourceHandle === null
+        );
 
-      return {
-        id: outlet?.id || edge.id,
-        to: edge.target,
-        label: String(outlet?.label || edge.label || ''),
-        condition: outlet?.condition || '',
-      };
-    });
+        return {
+          id: outlet?.id || edge.id,
+          to: edge.target,
+          label: String(outlet?.label || edge.label || ''),
+          condition: outlet?.condition || '',
+        };
+      }
+    );
 
     // Sort outlets based on their order in the node data
     if (outlets?.length > 1) {
@@ -45,7 +52,7 @@ export function convertReactFlowToZFlo(
       id: node.id,
       title: nodeData.title || 'Untitled',
       content: nodeData.content || '',
-      isAutoAdvance,
+      autoAdvance: isAutoAdvance,
       outlets,
       actions: nodeData.actions || [],
     };
@@ -65,9 +72,9 @@ export function convertReactFlowToZFlo(
     description: flowMetadata.description,
     nodes: zfloNodes,
     startNodeId: startNode?.id || zfloNodes[0]?.id || '',
-    globalState: flowMetadata.globalState,
+    initialState: flowMetadata.initialState,
     stateRules: flowMetadata.stateRules,
-    autoAdvance: flowMetadata.autoAdvance,
+    autoAdvanceMode: flowMetadata.autoAdvanceMode,
     expressionLanguage: flowMetadata.expressionLanguage,
     metadata: flowMetadata.metadata,
   };

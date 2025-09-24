@@ -1,10 +1,10 @@
 import { Node, Edge, Position } from '@xyflow/react';
-import { ZFFlow, ZFNode } from '@zflo/core';
+import { FlowDefinition, NodeDefinition } from '@zflo/core';
 // uuidv4 will be used for generating IDs in future enhancements
 
 export interface ZFReactFlowNode extends Node {
   data: {
-    zfloNode: ZFNode;
+    zfloNode: NodeDefinition;
     outputCount: number;
   };
 }
@@ -17,7 +17,7 @@ export interface ZFReactFlowEdge extends Edge {
   };
 }
 
-export function convertZFloToReactFlow(flow: ZFFlow): {
+export function convertZFloToReactFlow(flow: FlowDefinition): {
   nodes: ZFReactFlowNode[];
   edges: ZFReactFlowEdge[];
 } {

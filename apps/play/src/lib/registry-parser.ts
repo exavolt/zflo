@@ -1,4 +1,4 @@
-import { ZFFlow } from '@zflo/core';
+import { FlowDefinition } from '@zflo/core';
 import { getFormatRegistry } from '@zflo/api-format';
 
 // Import format packages to trigger auto-registration
@@ -9,7 +9,7 @@ import '@zflo/format-zflojson';
 
 export interface ParseResult {
   success: boolean;
-  flow?: ZFFlow;
+  flow?: FlowDefinition;
   error?: string;
   format?: string;
   confidence?: number;

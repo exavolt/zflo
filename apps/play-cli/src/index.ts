@@ -5,7 +5,7 @@ import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import chalk from 'chalk';
 import { FlowPlayer } from './flow-player.js';
-import type { ZFFlow } from '@zflo/core';
+import type { FlowDefinition } from '@zflo/core';
 
 const program = new Command();
 
@@ -21,7 +21,7 @@ program
       // Resolve and read the flow file
       const filePath = resolve(flowFile);
       const fileContent = readFileSync(filePath, 'utf-8');
-      const flow: ZFFlow = JSON.parse(fileContent);
+      const flow: FlowDefinition = JSON.parse(fileContent);
 
       // Validate basic flow structure
       if (

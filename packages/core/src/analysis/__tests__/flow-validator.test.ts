@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { FlowValidator } from '../flow-validator';
-import { ZFFlow, ZFNode } from '../../types/flow-types';
+import { FlowDefinition, NodeDefinition } from '../../types/flow-types';
 
 describe('FlowValidator', () => {
   let validator: FlowValidator;
@@ -10,9 +10,9 @@ describe('FlowValidator', () => {
   });
 
   const createBasicFlow = (
-    nodes: ZFNode[],
+    nodes: NodeDefinition[],
     startNodeId: string = 'start'
-  ): ZFFlow => ({
+  ): FlowDefinition => ({
     id: 'test-flow',
     title: 'Test Flow',
     description: 'Test flow for validation',
@@ -375,7 +375,7 @@ describe('FlowValidator', () => {
 
   describe('Auto-advance Path Validation', () => {
     it('should validate proper if-else path structure', () => {
-      const flow: ZFFlow = {
+      const flow: FlowDefinition = {
         id: 'test-flow',
         title: 'Test Flow',
         startNodeId: 'start',
@@ -419,7 +419,7 @@ describe('FlowValidator', () => {
     });
 
     it('should error on multiple default outlets', () => {
-      const flow: ZFFlow = {
+      const flow: FlowDefinition = {
         id: 'test-flow',
         title: 'Test Flow',
         startNodeId: 'start',
@@ -467,7 +467,7 @@ describe('FlowValidator', () => {
     });
 
     it('should warn about suboptimal path order', () => {
-      const flow: ZFFlow = {
+      const flow: FlowDefinition = {
         id: 'test-flow',
         title: 'Test Flow',
         startNodeId: 'start',
@@ -514,7 +514,7 @@ describe('FlowValidator', () => {
     });
 
     it('should warn about unreachable outlets after always-true condition', () => {
-      const flow: ZFFlow = {
+      const flow: FlowDefinition = {
         id: 'test-flow',
         title: 'Test Flow',
         startNodeId: 'start',
@@ -565,7 +565,7 @@ describe('FlowValidator', () => {
     });
 
     it('should warn about missing default path', () => {
-      const flow: ZFFlow = {
+      const flow: FlowDefinition = {
         id: 'test-flow',
         title: 'Test Flow',
         startNodeId: 'start',
@@ -602,7 +602,7 @@ describe('FlowValidator', () => {
     });
 
     it('should not validate non-auto-advance nodes', () => {
-      const flow: ZFFlow = {
+      const flow: FlowDefinition = {
         id: 'test-flow',
         title: 'Test Flow',
         startNodeId: 'start',
@@ -635,7 +635,7 @@ describe('FlowValidator', () => {
     });
 
     it('should validate decision nodes with default auto-advance', () => {
-      const flow: ZFFlow = {
+      const flow: FlowDefinition = {
         id: 'test-flow',
         title: 'Test Flow',
         startNodeId: 'start',

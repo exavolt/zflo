@@ -12,9 +12,9 @@ pnpm add @zflo/react-web @zflo/react @zflo/core
 
 ```tsx
 import { FlowPlayer } from '@zflo/react-web';
-import type { ZFFlow } from '@zflo/core';
+import type { FlowDefinition } from '@zflo/core';
 
-export function App({ flow }: { flow: ZFFlow }) {
+export function App({ flow }: { flow: FlowDefinition }) {
   return (
     <FlowPlayer
       flowchart={flow}

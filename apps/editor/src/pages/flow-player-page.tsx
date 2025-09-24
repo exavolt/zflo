@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router';
-import { FlowPlayer, ZFFlow } from '@zflo/ui-react-tw';
+import { FlowPlayer, FlowDefinition } from '@zflo/ui-react-tw';
 import { getSharedFlow, type SharedFlow } from '@zflo/platform-core';
 import { Button } from '../components/ui/button';
 import {
@@ -108,7 +108,7 @@ export function FlowPlayerPage() {
       <main className="max-w-4xl mx-auto p-4">
         {flow.flow_data ? (
           <FlowPlayer
-            flowchart={flow.flow_data as unknown as ZFFlow}
+            flow={flow.flow_data as unknown as FlowDefinition}
             autoStart={false}
             enableTypingAnimation={true}
             typingSpeed={3}

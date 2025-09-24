@@ -1,6 +1,11 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useNodesState, useEdgesState } from '@xyflow/react';
-import { ZFFlow, ZFNode, inferNodeTypes } from '@zflo/core';
+import {
+  FlowDefinition,
+  FlowMetadata,
+  inferNodeTypes,
+  NodeDefinition,
+} from '@zflo/core';
 import { v4 as uuidv4 } from 'uuid';
 import { convertZFloToReactFlow } from '../lib/converters/zflo-to-reactflow';
 import { convertReactFlowToZFlo } from '../lib/converters/reactflow-to-zflo';
@@ -9,14 +14,14 @@ import {
   ZFReactFlowEdge,
 } from '../lib/converters/zflo-to-reactflow';
 
-export function useFlowState(initialFlow?: ZFFlow) {
-  const [flowMetadata, setFlowMetadata] = useState<Partial<ZFFlow>>({
+export function useFlowState(initialFlow?: FlowDefinition) {
+  const [flowMetadata, setFlowMetadata] = useState<FlowMetadata>({
     id: initialFlow?.id || uuidv4(),
     title: initialFlow?.title || 'New Flow',
     description: initialFlow?.description,
-    globalState: initialFlow?.globalState || {},
+    initialState: initialFlow?.initialState || {},
     stateRules: initialFlow?.stateRules || [],
-    autoAdvance: initialFlow?.autoAdvance || 'default',
+    autoAdvanceMode: initialFlow?.autoAdvanceMode || 'default',
     expressionLanguage: initialFlow?.expressionLanguage || 'cel',
   });
 
@@ -61,7 +66,7 @@ export function useFlowState(initialFlow?: ZFFlow) {
 
   // Update node content
   const updateNode = useCallback(
-    (nodeId: string, updates: Partial<ZFNode>) => {
+    (nodeId: string, updates: Partial<NodeDefinition>) => {
       setNodes((currentNodes) =>
         currentNodes.map((node) => {
           if (node.id === nodeId) {
@@ -136,7 +141,7 @@ export function useFlowState(initialFlow?: ZFFlow) {
   );
 
   // Convert current state to ZFlo format
-  const toZFFlow = useCallback((): ZFFlow => {
+  const toFlowDefinition = useCallback((): FlowDefinition => {
     return convertReactFlowToZFlo(
       nodes,
       edges,
@@ -147,7 +152,7 @@ export function useFlowState(initialFlow?: ZFFlow) {
 
   // Load ZFlo flow
   const loadFlow = useCallback(
-    (flow: ZFFlow) => {
+    (flow: FlowDefinition) => {
       const { nodes: newNodes, edges: newEdges } = convertZFloToReactFlow(flow);
       setNodes(newNodes);
       setEdges(newEdges);
@@ -155,9 +160,9 @@ export function useFlowState(initialFlow?: ZFFlow) {
         id: flow.id,
         title: flow.title,
         description: flow.description,
-        globalState: flow.globalState,
+        initialState: flow.initialState,
         stateRules: flow.stateRules,
-        autoAdvance: flow.autoAdvance,
+        autoAdvanceMode: flow.autoAdvanceMode,
         expressionLanguage: flow.expressionLanguage,
       });
     },
@@ -174,7 +179,7 @@ export function useFlowState(initialFlow?: ZFFlow) {
     updateNode,
     updateEdge,
     updateNodeTypes,
-    toZFFlow,
+    toFlowDefinition,
     loadFlow,
     setFlowMetadata,
   };

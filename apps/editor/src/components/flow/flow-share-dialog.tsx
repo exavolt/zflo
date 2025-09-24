@@ -21,14 +21,14 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { saveSharedFlow } from '@zflo/platform-core';
-import type { ZFFlow } from '@zflo/core';
+import type { FlowDefinition } from '@zflo/core';
 import { Textarea } from '../ui/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 
 interface FlowShareDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  flow: ZFFlow;
+  flow: FlowDefinition;
 }
 
 export function FlowShareDialog({

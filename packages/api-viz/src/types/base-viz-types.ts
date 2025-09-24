@@ -1,4 +1,4 @@
-import type { ZFFlow, ExecutionStep } from '../../../core/dist';
+import type { FlowDefinition, ExecutionStep } from '@zflo/core';
 import type { CSSProperties } from 'react';
 
 /**
@@ -6,7 +6,7 @@ import type { CSSProperties } from 'react';
  */
 export interface BaseVizProps {
   /** The flow to visualize */
-  flow: ZFFlow;
+  flow: FlowDefinition;
   /** ID of the currently active/executing node */
   currentNodeId?: string;
   /** Execution history for highlighting traversed paths */

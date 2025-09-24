@@ -1,10 +1,10 @@
 import type { Node } from '@xyflow/react';
-import type { ZFNode, NodeType } from '@zflo/core';
+import type { NodeType, NodeDefinition } from '@zflo/core';
 import type { FullVizProps } from '@zflo/api-viz';
 
 export interface FlowVizNode extends Node {
   data: {
-    xfNode: ZFNode;
+    xfNode: NodeDefinition;
     nodeType?: NodeType;
     isCurrentNode: boolean;
     isTraversed: boolean;

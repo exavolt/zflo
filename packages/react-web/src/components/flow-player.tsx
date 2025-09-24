@@ -1,9 +1,9 @@
 import React, { useEffect, memo, useCallback, useMemo } from 'react';
 import type {
-  ZFFlow,
+  FlowDefinition,
   EngineOptions,
   ExecutionStep,
-  AnnotatedNode,
+  RuntimeNode,
 } from '@zflo/core';
 import { useFlowEngine } from '@zflo/react';
 import { NodeRenderer } from './node-renderer';
@@ -12,10 +12,10 @@ import { LoadingSpinner } from './loading-spinner';
 import { ErrorDisplay } from './error-display';
 
 export interface FlowPlayerProps {
-  flowchart: ZFFlow;
+  flow: FlowDefinition;
   options?: EngineOptions;
   onComplete?: (history: ExecutionStep[]) => void;
-  onNodeChange?: (node: AnnotatedNode) => void;
+  onNodeChange?: (node: RuntimeNode) => void;
   onStateChange?: (state: Record<string, unknown>) => void;
   className?: string;
   theme?: 'light' | 'dark';
@@ -28,7 +28,7 @@ export interface FlowPlayerProps {
 
 export const FlowPlayer: React.FC<FlowPlayerProps> = memo(
   ({
-    flowchart,
+    flow,
     options,
     onComplete,
     onNodeChange,
@@ -53,7 +53,7 @@ export const FlowPlayer: React.FC<FlowPlayerProps> = memo(
       goBack,
       reset,
       start,
-    } = useFlowEngine(flowchart, options);
+    } = useFlowEngine(flow, options);
 
     const previousState = useMemo(
       () =>

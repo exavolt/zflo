@@ -1,4 +1,4 @@
-import type { ZFFlow, ExecutionStep } from '@zflo/core';
+import type { FlowDefinition, ExecutionStep } from '@zflo/core';
 import type { CSSProperties } from 'react';
 
 /**
@@ -22,7 +22,7 @@ export interface MermaidVizOptions {
  */
 export interface MermaidVizProps {
   /** The flow to visualize */
-  flow: ZFFlow;
+  flow: FlowDefinition;
   /** ID of the currently active/executing node */
   currentNodeId?: string;
   /** Execution history for highlighting traversed paths */

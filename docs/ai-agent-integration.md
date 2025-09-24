@@ -6,20 +6,20 @@ ZFlo is not just a tool for building human-facing interactive experiences; its a
 
 This document explores two primary workflows for this synergy:
 
-1.  **The AI Agent as an Executor**: The agent follows a predefined `ZFFlow` to perform a task, ensuring consistency, repeatability, and transparency.
-2.  **The AI Agent as an Author**: The agent generates a new `ZFFlow` from a user's natural language description, creating a reusable, automated workflow.
+1.  **The AI Agent as an Executor**: The agent follows a predefined `FlowDefinition` to perform a task, ensuring consistency, repeatability, and transparency.
+2.  **The AI Agent as an Author**: The agent generates a new `FlowDefinition` from a user's natural language description, creating a reusable, automated workflow.
 
 ---
 
 ## Workflow 1: The AI Agent as Executor
 
-In this model, a `ZFFlow` acts as a Standard Operating Procedure (SOP) that an AI agent can execute. Instead of relying on a series of manual prompts, a user can simply ask the agent to run a specific flow.
+In this model, a `FlowDefinition` acts as a Standard Operating Procedure (SOP) that an AI agent can execute. Instead of relying on a series of manual prompts, a user can simply ask the agent to run a specific flow.
 
 ### How It Works
 
-1.  **Flow Definition**: A developer or power user defines a workflow as a `ZFFlow`, where each node represents a step and its content is an instruction for the agent.
+1.  **Flow Definition**: A developer or power user defines a workflow as a `FlowDefinition`, where each node represents a step and its content is an instruction for the agent.
 2.  **Invocation**: The user asks the agent to execute the flow (e.g., "_Cascade, run the 'new-component' workflow._").
-3.  **Execution**: The agent parses the `ZFFlow` and traverses it node by node:
+3.  **Execution**: The agent parses the `FlowDefinition` and traverses it node by node:
     - It reads the instruction in the current node's `content`.
     - It uses its available tools (e.g., `write_to_file`, `run_command`, `grep_search`) to perform the action.
     - The `globalState` of the flow serves as the agent's short-term memory for the task, storing variables like file paths or user inputs.
@@ -82,20 +82,20 @@ This flow guides an agent in creating a new React component using concrete tool 
 ### Benefits
 
 - **Automation & Consistency**: Complex tasks are executed the same way every time, reducing human error.
-- **Transparency**: The `ZFFlow` file provides a clear, auditable record of the agent's intended actions.
+- **Transparency**: The `FlowDefinition` file provides a clear, auditable record of the agent's intended actions.
 - **Composability**: Flows can be designed to call other flows, creating complex, nested automations.
 
 ---
 
 ## Workflow 2: The AI Agent as Author
 
-The reverse workflow is equally powerful: an AI agent can create a `ZFFlow` file from a simple, natural language request.
+The reverse workflow is equally powerful: an AI agent can create a `FlowDefinition` file from a simple, natural language request.
 
 ### How It Works
 
 1.  **User Request**: The user describes a process in plain English (e.g., "_I need a workflow to run tests and then deploy the app if they pass._").
 2.  **Translation**: The AI agent parses the request and identifies the steps, conditions, and dependencies.
-3.  **Flow Generation**: The agent translates this logical structure into a valid `ZFFlow` JSON object.
+3.  **Flow Generation**: The agent translates this logical structure into a valid `FlowDefinition` JSON object.
 4.  **File Creation**: The agent uses its `write_to_file` tool to save the generated flow, making it available for future execution.
 
 ### Example: Generating a Deployment Flow
@@ -144,7 +144,7 @@ The reverse workflow is equally powerful: an AI agent can create a `ZFFlow` file
 
 - **Rapid Automation**: Users can create complex automations without writing any code.
 - **Democratization**: Anyone can create structured workflows, not just developers.
-- **Reusable Asset Library**: Over time, a team can build a library of `ZFFlow` playbooks for all its common operations.
+- **Reusable Asset Library**: Over time, a team can build a library of `FlowDefinition` playbooks for all its common operations.
 
 ---
 
@@ -189,9 +189,9 @@ The host application would manage these tools in a `ToolRegistry`. On startup, t
 
 ### 3. Invoking Tools within a ZFlo Flow
 
-To make these tools executable within a flow, we can introduce a new action type: `tool`. This allows a `ZFNode` to explicitly call an application-specific tool.
+To make these tools executable within a flow, we can introduce a new action type: `tool`. This allows a `NodeDefinition` to explicitly call an application-specific tool.
 
-**Example `ZFNode` with a `tool` action:**
+**Example `NodeDefinition` with a `tool` action:**
 
 This node, as part of a deployment flow, uses the `sendSlackMessage` tool to post a success notification.
 

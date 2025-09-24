@@ -1,6 +1,6 @@
 import { useCallback, useState, useEffect } from 'react';
 import { Node, Edge } from '@xyflow/react';
-import type { ZFFlow } from '@zflo/core';
+import type { FlowMetadata } from '@zflo/core';
 import { v4 as uuidv4 } from 'uuid';
 import { NodeData } from '@/types';
 
@@ -11,7 +11,7 @@ interface FlowState {
   flowTitle: string;
   nodeIdCounter: number;
   edgeIdCounter: number;
-  flowMetadata?: Partial<ZFFlow>;
+  flowMetadata?: FlowMetadata;
   lastModified: number;
 }
 
@@ -108,7 +108,7 @@ export function useEditorPersistence() {
           title,
           description: '',
           expressionLanguage: 'cel',
-          globalState: {},
+          initialState: {},
           stateSchema: undefined,
           metadata: {},
         },

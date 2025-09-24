@@ -56,11 +56,11 @@ The UI-agnostic nature of `@zflo/core` is its greatest strength for game integra
 
 This is the most powerful and transformative phase, turning ZFlo from a prototyping tool into a full-fledged narrative asset pipeline.
 
-The goal is to create **custom exporters** that convert the standardized `ZFFlow` JSON representation into native, engine-ready code and assets.
+The goal is to create **custom exporters** that convert the standardized `FlowDefinition` JSON representation into native, engine-ready code and assets.
 
 ### Example: Unity C# Exporter
 
-An exporter could be built to parse an `ZFFlow` and generate the following C# files:
+An exporter could be built to parse an `FlowDefinition` and generate the following C# files:
 
 1.  **Dialogue & Node Data (`ScriptableObject`s)**:
     - Each node becomes a `DialogueNode.asset`.
