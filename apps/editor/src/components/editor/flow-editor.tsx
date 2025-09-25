@@ -683,13 +683,17 @@ export function FlowEditor() {
       <FlowMetadataEditor
         isOpen={activeSheet === 'metadata'}
         onClose={() => setActiveSheet(null)}
-        flow={{
+        flowMetadata={{
           id: flowMetadata.id,
           title: flowMetadata.title,
           description: flowMetadata.description,
           expressionLanguage: flowMetadata.expressionLanguage,
-          stateSchema: flowMetadata.stateSchema?.toString() || undefined,
-          initialState: flowMetadata.initialState?.toString() || undefined,
+          stateSchema: flowMetadata.stateSchema
+            ? JSON.stringify(flowMetadata.stateSchema)
+            : undefined,
+          initialState: flowMetadata.initialState
+            ? JSON.stringify(flowMetadata.initialState)
+            : undefined,
           metadata: flowMetadata.metadata,
         }}
         onSave={(metadata) => {

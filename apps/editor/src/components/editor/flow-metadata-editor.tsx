@@ -29,14 +29,14 @@ interface FlowMetadata {
 interface FlowMetadataEditorProps {
   isOpen: boolean;
   onClose: () => void;
-  flow: FlowMetadata;
+  flowMetadata: FlowMetadata;
   onSave: (metadata: FlowMetadata) => void;
 }
 
 export function FlowMetadataEditor({
   isOpen,
   onClose,
-  flow,
+  flowMetadata,
   onSave,
 }: FlowMetadataEditorProps) {
   const [formData, setFormData] = useState<FlowMetadata>({
@@ -58,24 +58,20 @@ export function FlowMetadataEditor({
 
   // Initialize form data when flow changes
   useEffect(() => {
-    if (flow) {
+    if (flowMetadata) {
       setFormData({
-        id: flow.id || '',
-        title: flow.title || '',
-        description: flow.description || '',
-        expressionLanguage: flow.expressionLanguage || 'cel',
-        stateSchema: flow.stateSchema
-          ? JSON.stringify(flow.stateSchema, null, 2)
-          : '',
-        initialState: flow.initialState
-          ? JSON.stringify(flow.initialState, null, 2)
-          : '',
-        metadata: flow.metadata || {},
+        id: flowMetadata.id || '',
+        title: flowMetadata.title || '',
+        description: flowMetadata.description || '',
+        expressionLanguage: flowMetadata.expressionLanguage || 'cel',
+        stateSchema: flowMetadata.stateSchema,
+        initialState: flowMetadata.initialState,
+        metadata: flowMetadata.metadata || {},
       });
 
-      setMetadataKeys(Object.keys(flow.metadata || {}));
+      setMetadataKeys(Object.keys(flowMetadata.metadata || {}));
     }
-  }, [flow]);
+  }, [flowMetadata]);
 
   const validateJSON = (jsonString: string, fieldName: string) => {
     if (!jsonString.trim()) return true;
@@ -155,12 +151,8 @@ export function FlowMetadataEditor({
         title: formData.title,
         description: formData.description || undefined,
         expressionLanguage: formData.expressionLanguage,
-        stateSchema: formData.stateSchema
-          ? JSON.parse(formData.stateSchema)
-          : undefined,
-        initialState: formData.initialState
-          ? JSON.parse(formData.initialState)
-          : undefined,
+        stateSchema: formData.stateSchema,
+        initialState: formData.initialState,
         metadata:
           Object.keys(formData.metadata || {}).length > 0
             ? formData.metadata
@@ -228,7 +220,7 @@ export function FlowMetadataEditor({
               <Label htmlFor="expression-language">Expression Language</Label>
               <Select
                 value={formData.expressionLanguage}
-                onValueChange={(value: 'cel') =>
+                onValueChange={(value: 'liquid' | 'cel') =>
                   handleInputChange('expressionLanguage', value)
                 }
               >
@@ -236,6 +228,7 @@ export function FlowMetadataEditor({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="liquid">Liquid (Default)</SelectItem>
                   <SelectItem value="cel">
                     CEL (Common Expression Language)
                   </SelectItem>
