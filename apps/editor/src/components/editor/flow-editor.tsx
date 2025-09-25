@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   ReactFlow,
   Controls,
@@ -46,7 +46,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '../ui/dialog';
-import { useEditorPersistence } from '@/hooks/use-editor-persistence';
 import { convertReactFlowToZFlo } from '@/lib/converters/reactflow-to-zflo';
 import { FlowPlayer } from '@zflo/ui-react-tw';
 import { FlowMetadataEditor } from './flow-metadata-editor';
@@ -72,6 +71,7 @@ import { EditorData, NodeData } from '@/types';
 import { useGlobalNodeEditor } from '@/hooks/use-global-node-editor';
 import { NodeEditor } from './node-editor';
 import { NodeEditorProvider } from '@/contexts/node-editor-context';
+import { useUnifiedPersistence } from '@/hooks/use-unified-persistence';
 
 const nodeTypes = {
   zfloNode: ZEdNode,
@@ -94,6 +94,7 @@ export function FlowEditor() {
 
   // Multi-flow persistence
   const {
+    isLoading: isLoadingFlows,
     activeFlowId,
     getActiveFlow,
     getAllFlows,
@@ -101,24 +102,25 @@ export function FlowEditor() {
     createFlow,
     deleteFlow,
     switchToFlow,
-    createFlowStateHash,
-  } = useEditorPersistence();
+  } = useUnifiedPersistence();
 
-  // Get current active flow or use defaults
-  const activeFlow = getActiveFlow();
-  const defaultNodes: Node[] = [
-    {
-      id: 'zflo-n1',
-      type: 'zfloNode',
-      position: { x: 100, y: 100 },
-      data: {
-        title: 'Start',
-        content: '',
-        outputCount: 0,
-        outlets: [],
-      } as NodeData as unknown as Record<string, unknown>,
-    },
-  ];
+  // Get current active flow or use defaults (memoized to prevent infinite loops)
+  const defaultNodes: Node[] = useMemo(
+    () => [
+      {
+        id: 'zflo-n1',
+        type: 'zfloNode',
+        position: { x: 100, y: 100 },
+        data: {
+          title: 'Start',
+          content: '',
+          outputCount: 0,
+          outlets: [],
+        } as NodeData as unknown as Record<string, unknown>,
+      },
+    ],
+    []
+  );
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(defaultNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -186,16 +188,28 @@ export function FlowEditor() {
     [nodes, edges, flowTitle, flowMetadata]
   );
 
-  // Auto-save to localStorage when state changes (but not during preview or loading)
+  // Auto-save when state changes (but not during preview or loading)
   useEffect(() => {
-    if (!activeFlowId || isPreviewOpen || isLoadingFlowRef.current) return;
+    if (
+      !activeFlowId ||
+      isPreviewOpen ||
+      isLoadingFlowRef.current ||
+      isLoadingFlows
+    )
+      return;
 
     const timeoutId = setTimeout(() => {
       saveFlowState(currentFlowState);
     }, 1000); // Increased debounce to 1 second for better UX
 
     return () => clearTimeout(timeoutId);
-  }, [currentFlowState, saveFlowState, activeFlowId, isPreviewOpen]);
+  }, [
+    currentFlowState,
+    saveFlowState,
+    activeFlowId,
+    isPreviewOpen,
+    isLoadingFlows,
+  ]);
 
   // Update flow metadata when title changes
   useEffect(() => {
@@ -204,7 +218,11 @@ export function FlowEditor() {
 
   // Update editor state when active flow changes
   useEffect(() => {
-    if (activeFlow) {
+    if (isLoadingFlows) return; // Don't update during loading
+
+    const activeFlow = getActiveFlow();
+
+    if (activeFlow && activeFlowId) {
       // Set loading flag to prevent auto-save during state update
       isLoadingFlowRef.current = true;
 
@@ -234,8 +252,15 @@ export function FlowEditor() {
       setTimeout(() => {
         isLoadingFlowRef.current = false;
       }, 100);
+    } else if (!activeFlowId) {
+      // Reset to defaults when no active flow
+      setNodes(defaultNodes);
+      setEdges([]);
+      setFlowTitle('New Flow');
+      nodeIdSourceRef.current = 1;
+      edgeIdSourceRef.current = 1;
     }
-  }, [activeFlowId, setNodes, setEdges]);
+  }, [activeFlowId, isLoadingFlows]);
 
   // Clear current flow and reset to defaults
   const clearEditor = useCallback(() => {
@@ -436,7 +461,9 @@ export function FlowEditor() {
             )}
             activeFlowId={activeFlowId}
             onSwitchFlow={switchToFlow}
-            onCreateFlow={createFlow}
+            onCreateFlow={async (title: string) => {
+              await createFlow(title);
+            }}
             onDeleteFlow={deleteFlow}
           />
         </div>

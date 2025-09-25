@@ -19,7 +19,7 @@ interface FlowSwitcherProps {
   }>;
   activeFlowId: string;
   onSwitchFlow: (flowId: string) => void;
-  onCreateFlow: (title: string) => void;
+  onCreateFlow: (title: string) => void | Promise<void>;
   onDeleteFlow: (flowId: string) => void;
 }
 
@@ -32,10 +32,14 @@ export function FlowSwitcher({
 }: FlowSwitcherProps) {
   const activeFlow = flows.find((f) => f.id === activeFlowId);
 
-  const handleCreateFlow = () => {
+  const handleCreateFlow = async () => {
     const flowNumber = flows.length + 1;
     const defaultTitle = `Flow ${flowNumber}`;
-    onCreateFlow(defaultTitle);
+    try {
+      await onCreateFlow(defaultTitle);
+    } catch (error) {
+      console.error('Failed to create flow:', error);
+    }
   };
 
   const formatLastModified = (timestamp: number) => {

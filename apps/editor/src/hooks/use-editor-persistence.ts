@@ -250,7 +250,9 @@ export function useEditorPersistence() {
 
   // Get all flows for UI display
   const getAllFlows = useCallback(() => {
-    return flowOrder.map((id) => flows[id]).filter(Boolean);
+    return flowOrder
+      .map((id) => flows[id])
+      .filter((flow): flow is FlowState => !!flow);
   }, [flows, flowOrder]);
 
   // Clear all flows
