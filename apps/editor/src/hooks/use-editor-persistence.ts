@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import { Node, Edge } from '@xyflow/react';
 import type { FlowMetadata } from '@zflo/core';
 import { v4 as uuidv4 } from 'uuid';
@@ -51,12 +51,43 @@ export function useEditorPersistence() {
     return null;
   }, []);
 
-  // Save current flow state
+  // Keep track of the last saved state for change detection
+  const lastSavedStateRef = useRef<Record<string, string>>({});
+
+  // Helper function to create a hash of the flow state for comparison
+  const createFlowStateHash = useCallback(
+    (flowState: Omit<FlowState, 'id' | 'lastModified'>) => {
+      return JSON.stringify({
+        nodes: flowState.nodes,
+        edges: flowState.edges,
+        flowTitle: flowState.flowTitle,
+        nodeIdCounter: flowState.nodeIdCounter,
+        edgeIdCounter: flowState.edgeIdCounter,
+        flowMetadata: flowState.flowMetadata,
+      });
+    },
+    []
+  );
+
+  // Save current flow state only if it has actually changed
   const saveFlowState = useCallback(
-    (flowState: Omit<FlowState, 'id' | 'lastModified'>, flowId?: string) => {
+    (
+      flowState: Omit<FlowState, 'id' | 'lastModified'>,
+      flowId?: string,
+      forceUpdate = false
+    ) => {
       try {
         const targetFlowId = flowId || activeFlowId;
         if (!targetFlowId) return;
+
+        // Create hash of current state
+        const currentStateHash = createFlowStateHash(flowState);
+        const lastSavedHash = lastSavedStateRef.current[targetFlowId];
+
+        // Only save if the state has actually changed or if forced
+        if (!forceUpdate && currentStateHash === lastSavedHash) {
+          return;
+        }
 
         const updatedFlow: FlowState = {
           ...flowState,
@@ -73,11 +104,14 @@ export function useEditorPersistence() {
 
         localStorage.setItem(STORAGE_KEY, JSON.stringify(multiFlowData));
         setFlows(newFlows);
+
+        // Update the last saved state hash
+        lastSavedStateRef.current[targetFlowId] = currentStateHash;
       } catch (error) {
         console.warn('Failed to save flow state to localStorage:', error);
       }
     },
-    [activeFlowId, flows, flowOrder]
+    [activeFlowId, flows, flowOrder, createFlowStateHash]
   );
 
   // Create a new flow
@@ -129,13 +163,24 @@ export function useEditorPersistence() {
         setFlows(newFlows);
         setActiveFlowId(flowId);
         setFlowOrder(newFlowOrder);
+
+        // Initialize the hash for the new flow
+        const flowStateHash = createFlowStateHash({
+          nodes: newFlow.nodes,
+          edges: newFlow.edges,
+          flowTitle: newFlow.flowTitle,
+          nodeIdCounter: newFlow.nodeIdCounter,
+          edgeIdCounter: newFlow.edgeIdCounter,
+          flowMetadata: newFlow.flowMetadata,
+        });
+        lastSavedStateRef.current[flowId] = flowStateHash;
       } catch (error) {
         console.warn('Failed to create new flow:', error);
       }
 
       return flowId;
     },
-    [flows, flowOrder]
+    [flows, flowOrder, createFlowStateHash]
   );
 
   // Delete a flow
@@ -227,11 +272,24 @@ export function useEditorPersistence() {
       setFlows(multiFlowData.flows);
       setActiveFlowId(multiFlowData.activeFlowId);
       setFlowOrder(multiFlowData.flowOrder);
+
+      // Initialize hashes for all existing flows
+      Object.entries(multiFlowData.flows).forEach(([flowId, flowState]) => {
+        const flowStateHash = createFlowStateHash({
+          nodes: flowState.nodes,
+          edges: flowState.edges,
+          flowTitle: flowState.flowTitle,
+          nodeIdCounter: flowState.nodeIdCounter,
+          edgeIdCounter: flowState.edgeIdCounter,
+          flowMetadata: flowState.flowMetadata,
+        });
+        lastSavedStateRef.current[flowId] = flowStateHash;
+      });
     } else {
       // Create default flow if none exists
       createFlow('My First Flow');
     }
-  }, []);
+  }, [createFlowStateHash]);
 
   return {
     // Legacy compatibility
@@ -250,5 +308,8 @@ export function useEditorPersistence() {
     getActiveFlow,
     getAllFlows,
     clearAllFlows,
+
+    // Utility functions
+    createFlowStateHash,
   };
 }

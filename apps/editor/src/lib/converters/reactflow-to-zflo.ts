@@ -32,6 +32,7 @@ export function convertReactFlowToZFlo(
           to: edge.target,
           label: String(outlet?.label || edge.label || ''),
           condition: outlet?.condition || '',
+          actions: outlet?.actions || [],
         };
       }
     );

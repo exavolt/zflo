@@ -111,7 +111,7 @@ export const FlowPlayer: React.FC<FlowPlayerProps> = ({
 
   // Typing animation for node content
   const { displayedText, isTyping, skipToEnd } = useTypingAnimation({
-    text: currentNode?.definition.content || '',
+    text: currentNode?.interpolatedContent || '',
     speed: typingSpeed,
     interval: typingInterval,
     enabled: enableTypingAnimation,

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../ui/sheet';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -56,9 +56,14 @@ export function FlowMetadataEditor({
     initialState?: string;
   }>({});
 
+  // Track if we're currently initializing to prevent unnecessary saves
+  const isInitializingRef = useRef(false);
+
   // Initialize form data when flow changes
   useEffect(() => {
     if (flowMetadata) {
+      isInitializingRef.current = true;
+
       setFormData({
         id: flowMetadata.id || '',
         title: flowMetadata.title || '',
@@ -70,6 +75,11 @@ export function FlowMetadataEditor({
       });
 
       setMetadataKeys(Object.keys(flowMetadata.metadata || {}));
+
+      // Clear initialization flag after a short delay
+      setTimeout(() => {
+        isInitializingRef.current = false;
+      }, 50);
     }
   }, [flowMetadata]);
 
@@ -89,16 +99,23 @@ export function FlowMetadataEditor({
     }
   };
 
-  const handleInputChange = (field: keyof FlowMetadata, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const handleInputChange = useCallback(
+    (field: keyof FlowMetadata, value: string) => {
+      if (isInitializingRef.current) return;
 
-    // Validate JSON fields
-    if (field === 'stateSchema' || field === 'initialState') {
-      validateJSON(value, field);
-    }
-  };
+      setFormData((prev) => ({ ...prev, [field]: value }));
 
-  const handleMetadataChange = (key: string, value: string) => {
+      // Validate JSON fields
+      if (field === 'stateSchema' || field === 'initialState') {
+        validateJSON(value, field);
+      }
+    },
+    []
+  );
+
+  const handleMetadataChange = useCallback((key: string, value: string) => {
+    if (isInitializingRef.current) return;
+
     setFormData((prev) => ({
       ...prev,
       metadata: {
@@ -106,9 +123,9 @@ export function FlowMetadataEditor({
         [key]: value,
       },
     }));
-  };
+  }, []);
 
-  const addMetadataField = () => {
+  const addMetadataField = useCallback(() => {
     if (newMetadataKey && !metadataKeys.includes(newMetadataKey)) {
       setMetadataKeys((prev) => [...prev, newMetadataKey]);
       setFormData((prev) => ({
@@ -120,15 +137,15 @@ export function FlowMetadataEditor({
       }));
       setNewMetadataKey('');
     }
-  };
+  }, [newMetadataKey, metadataKeys]);
 
-  const removeMetadataField = (key: string) => {
+  const removeMetadataField = useCallback((key: string) => {
     setMetadataKeys((prev) => prev.filter((k) => k !== key));
     setFormData((prev) => {
       const { [key]: removed, ...rest } = prev.metadata || {};
       return { ...prev, metadata: rest };
     });
-  };
+  }, []);
 
   const handleSave = () => {
     // Validate JSON fields before saving

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, useEffect } from 'react';
+import { useCallback, useRef, useState, useEffect, useMemo } from 'react';
 import {
   ReactFlow,
   Controls,
@@ -101,6 +101,7 @@ export function FlowEditor() {
     createFlow,
     deleteFlow,
     switchToFlow,
+    createFlowStateHash,
   } = useEditorPersistence();
 
   // Get current active flow or use defaults
@@ -169,31 +170,32 @@ export function FlowEditor() {
     return edgeIdSourceRef.current;
   }, []);
 
-  // Auto-save to localStorage when state changes (but not during preview)
+  // Track if we're currently loading a flow to prevent auto-save during load
+  const isLoadingFlowRef = useRef(false);
+
+  // Create a stable reference to the current flow state for comparison
+  const currentFlowState = useMemo(
+    () => ({
+      nodes,
+      edges,
+      flowTitle,
+      nodeIdCounter: nodeIdSourceRef.current,
+      edgeIdCounter: edgeIdSourceRef.current,
+      flowMetadata,
+    }),
+    [nodes, edges, flowTitle, flowMetadata]
+  );
+
+  // Auto-save to localStorage when state changes (but not during preview or loading)
   useEffect(() => {
-    if (!activeFlowId || isPreviewOpen) return;
+    if (!activeFlowId || isPreviewOpen || isLoadingFlowRef.current) return;
 
     const timeoutId = setTimeout(() => {
-      saveFlowState({
-        nodes,
-        edges,
-        flowTitle,
-        nodeIdCounter: nodeIdSourceRef.current,
-        edgeIdCounter: edgeIdSourceRef.current,
-        flowMetadata,
-      });
-    }, 500); // Debounce saves by 500ms
+      saveFlowState(currentFlowState);
+    }, 1000); // Increased debounce to 1 second for better UX
 
     return () => clearTimeout(timeoutId);
-  }, [
-    nodes,
-    edges,
-    flowTitle,
-    flowMetadata,
-    saveFlowState,
-    activeFlowId,
-    isPreviewOpen,
-  ]);
+  }, [currentFlowState, saveFlowState, activeFlowId, isPreviewOpen]);
 
   // Update flow metadata when title changes
   useEffect(() => {
@@ -203,6 +205,9 @@ export function FlowEditor() {
   // Update editor state when active flow changes
   useEffect(() => {
     if (activeFlow) {
+      // Set loading flag to prevent auto-save during state update
+      isLoadingFlowRef.current = true;
+
       setNodes(activeFlow.nodes);
       setEdges(
         activeFlow.edges.map((edge) => ({
@@ -224,6 +229,11 @@ export function FlowEditor() {
       );
       nodeIdSourceRef.current = activeFlow.nodeIdCounter;
       edgeIdSourceRef.current = activeFlow.edgeIdCounter;
+
+      // Clear loading flag after a short delay to allow state to settle
+      setTimeout(() => {
+        isLoadingFlowRef.current = false;
+      }, 100);
     }
   }, [activeFlowId, setNodes, setEdges]);
 
@@ -247,16 +257,20 @@ export function FlowEditor() {
     setFlowMetadata(newMetadata);
     setActiveSheet(null);
 
-    // Save the cleared state
+    // Save the cleared state with force update
     if (activeFlowId) {
-      saveFlowState({
-        nodes: defaultNodes,
-        edges: [],
-        flowTitle: 'New Flow',
-        nodeIdCounter: 1,
-        edgeIdCounter: 1,
-        flowMetadata: newMetadata,
-      });
+      saveFlowState(
+        {
+          nodes: defaultNodes,
+          edges: [],
+          flowTitle: 'New Flow',
+          nodeIdCounter: 1,
+          edgeIdCounter: 1,
+          flowMetadata: newMetadata,
+        },
+        undefined,
+        true
+      ); // Force update since we're intentionally clearing
     }
   }, [setNodes, setEdges, defaultNodes, saveFlowState, activeFlowId]);
 
@@ -361,8 +375,7 @@ export function FlowEditor() {
         )
       );
       globalNodeEditor.updateNodeData(updates);
-      // Trigger save after node update
-      // Save will be triggered by the debounced save mechanism
+      // Note: Save will be triggered by the debounced save mechanism
     },
     [setNodes, globalNodeEditor]
   );
