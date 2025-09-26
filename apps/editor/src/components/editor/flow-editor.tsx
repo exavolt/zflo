@@ -71,7 +71,7 @@ import { EditorData, NodeData } from '@/types';
 import { useGlobalNodeEditor } from '@/hooks/use-global-node-editor';
 import { NodeEditor } from './node-editor';
 import { NodeEditorProvider } from '@/contexts/node-editor-context';
-import { useUnifiedPersistence } from '@/hooks/use-unified-persistence';
+import { useIndexedDBPersistence } from '@/hooks/use-indexeddb-persistence';
 
 const nodeTypes = {
   zfloNode: ZEdNode,
@@ -102,7 +102,7 @@ export function FlowEditor() {
     createFlow,
     deleteFlow,
     switchToFlow,
-  } = useUnifiedPersistence();
+  } = useIndexedDBPersistence();
 
   // Get current active flow or use defaults (memoized to prevent infinite loops)
   const defaultNodes: Node[] = useMemo(

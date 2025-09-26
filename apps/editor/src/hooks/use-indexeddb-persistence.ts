@@ -4,7 +4,6 @@ import type { FlowMetadata } from '@zflo/core';
 import { v4 as uuidv4 } from 'uuid';
 import { NodeData } from '@/types';
 import { flowDb } from '@/lib/storage/flow-database';
-import { MigrationUtils } from '@/lib/storage/migration-manager';
 import type { EditorSettings, FlowRecord } from '@/lib/storage/storage-schema';
 
 interface FlowState {
@@ -92,11 +91,6 @@ export function useIndexedDBPersistence() {
   const loadFromStorage = useCallback(async (): Promise<void> => {
     try {
       setIsLoading(true);
-
-      // Run migration if needed
-      if (MigrationUtils.shouldRunMigration()) {
-        await flowDb.migrateFromLocalStorage();
-      }
 
       // Load all flows first
       const allFlows = await flowDb.flows.toArray();

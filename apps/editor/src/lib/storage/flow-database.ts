@@ -6,7 +6,6 @@ import {
   FlowTemplate,
   ZFloDatabase,
 } from './storage-schema';
-import { MigrationManager, MigrationUtils } from './migration-manager';
 
 export class FlowDatabase extends Dexie implements ZFloDatabase {
   flows!: Table<FlowRecord>;
@@ -43,58 +42,6 @@ export class FlowDatabase extends Dexie implements ZFloDatabase {
     );
   }
 
-  // Migration from localStorage using isolated migration manager
-  async migrateFromLocalStorage(): Promise<void> {
-    if (!MigrationUtils.shouldRunMigration()) {
-      return;
-    }
-
-    try {
-      const legacyData = MigrationManager.loadLegacyData();
-      if (!legacyData) return;
-
-      const stats = MigrationManager.getMigrationStats(legacyData);
-      console.log(
-        `Starting migration of ${stats.flowCount} flows (${stats.estimatedSize})`
-      );
-
-      // Create backup before migration
-      MigrationManager.createLegacyBackup();
-
-      // Convert legacy flows
-      const flowRecords: FlowRecord[] = Object.entries(
-        legacyData.flows || {}
-      ).map(([_id, flow]: [string, any]) =>
-        MigrationManager.convertLegacyFlow(flow)
-      );
-
-      // Convert legacy settings
-      const settings: EditorSettings =
-        MigrationManager.convertLegacySettings(legacyData);
-
-      // Perform migration in transaction
-      await this.transaction('rw', this.flows, this.settings, async () => {
-        if (flowRecords.length > 0) {
-          // Use bulkPut instead of bulkAdd to handle existing records
-          await this.flows.bulkPut(flowRecords);
-        }
-        // Use put instead of add to handle existing settings
-        await this.settings.put(settings);
-      });
-
-      // Mark migration as complete and cleanup
-      MigrationManager.markMigrationComplete();
-      MigrationManager.cleanupLegacyData();
-
-      console.log(
-        `Successfully migrated ${flowRecords.length} flows to IndexedDB`
-      );
-    } catch (error) {
-      console.error('Failed to migrate from localStorage:', error);
-      throw error;
-    }
-  }
-
   // Optimized flow operations
   async getFlowWithHistory(flowId: string): Promise<{
     flow: FlowRecord | undefined;
@@ -127,7 +74,6 @@ export class FlowDatabase extends Dexie implements ZFloDatabase {
       this.flows,
       this.flowHistory,
       async () => {
-        console.log('💾 Adding flow to database:', flowId);
         await this.flows.add({
           ...flowData,
           id: flowId,
@@ -135,7 +81,6 @@ export class FlowDatabase extends Dexie implements ZFloDatabase {
           lastModified: now,
           version: 1,
         } as FlowRecord);
-        console.log('✅ Flow added to flows table');
 
         await this.flowHistory.add({
           id:
