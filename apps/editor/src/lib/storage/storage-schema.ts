@@ -52,20 +52,9 @@ export interface EditorSettings {
   lastBackup?: Date;
 }
 
-export interface FlowTemplate {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  flowData: Omit<FlowRecord, 'id' | 'createdAt' | 'lastModified'>;
-  isBuiltIn: boolean;
-  usageCount: number;
-}
-
 // Database schema - Dexie interface doesn't need to match table types exactly
 export interface ZFloDatabase {
   flows: any;
   flowHistory: any;
   settings: any;
-  templates: any;
 }

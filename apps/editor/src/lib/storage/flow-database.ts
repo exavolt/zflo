@@ -3,7 +3,6 @@ import {
   FlowRecord,
   FlowHistoryEntry,
   EditorSettings,
-  FlowTemplate,
   ZFloDatabase,
 } from './storage-schema';
 
@@ -11,7 +10,6 @@ export class FlowDatabase extends Dexie implements ZFloDatabase {
   flows!: Table<FlowRecord>;
   flowHistory!: Table<FlowHistoryEntry>;
   settings!: Table<EditorSettings>;
-  templates!: Table<FlowTemplate>;
 
   constructor() {
     super('ZFloEditor');
@@ -21,7 +19,6 @@ export class FlowDatabase extends Dexie implements ZFloDatabase {
         'id, title, lastModified, createdAt, *tags, isTemplate, parentFlowId',
       flowHistory: 'id, flowId, timestamp, changeType, sessionId, userId',
       settings: 'id',
-      templates: 'id, name, category, isBuiltIn, usageCount',
     });
 
     // Add hooks for automatic timestamps and versioning
@@ -64,9 +61,7 @@ export class FlowDatabase extends Dexie implements ZFloDatabase {
     flowData: Omit<FlowRecord, 'id' | 'createdAt' | 'lastModified' | 'version'>,
     sessionId: string
   ): Promise<string> {
-    const flowId =
-      self.crypto?.randomUUID?.() ||
-      `flow-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const flowId = this.generateFlowId();
     const now = new Date();
 
     return await this.transaction(
@@ -83,9 +78,7 @@ export class FlowDatabase extends Dexie implements ZFloDatabase {
         } as FlowRecord);
 
         await this.flowHistory.add({
-          id:
-            self.crypto?.randomUUID?.() ||
-            `history-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          id: this.generateHistoryId(),
           flowId,
           changeType: 'create',
           changeDescription: `Created flow: ${flowData.title}`,
@@ -111,9 +104,7 @@ export class FlowDatabase extends Dexie implements ZFloDatabase {
       await this.flows.update(flowId, updates);
 
       await this.flowHistory.add({
-        id:
-          self.crypto?.randomUUID?.() ||
-          `history-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: this.generateHistoryId(),
         flowId,
         changeType: 'update',
         changeDescription,
@@ -135,9 +126,7 @@ export class FlowDatabase extends Dexie implements ZFloDatabase {
       await this.flows.delete(flowId);
 
       await this.flowHistory.add({
-        id:
-          self.crypto?.randomUUID?.() ||
-          `history-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: this.generateHistoryId(),
         flowId,
         changeType: 'delete',
         changeDescription: `Deleted flow: ${flow.title}`,
@@ -203,13 +192,11 @@ export class FlowDatabase extends Dexie implements ZFloDatabase {
   async getStorageStats(): Promise<{
     flowCount: number;
     historyEntryCount: number;
-    templateCount: number;
     estimatedSize: string;
   }> {
-    const [flowCount, historyEntryCount, templateCount] = await Promise.all([
+    const [flowCount, historyEntryCount] = await Promise.all([
       this.flows.count(),
       this.flowHistory.count(),
-      this.templates.count(),
     ]);
 
     // Rough estimation - IndexedDB doesn't provide exact size
@@ -218,9 +205,22 @@ export class FlowDatabase extends Dexie implements ZFloDatabase {
     return {
       flowCount,
       historyEntryCount,
-      templateCount,
       estimatedSize,
     };
+  }
+
+  private generateFlowId(): string {
+    return (
+      self.crypto?.randomUUID?.() ||
+      `flow-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
+    );
+  }
+
+  private generateHistoryId(): string {
+    return (
+      self.crypto?.randomUUID?.() ||
+      `history-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
+    );
   }
 }
 
